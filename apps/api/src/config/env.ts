@@ -11,6 +11,7 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().default("local-refresh-secret"),
   JWT_ACCESS_EXPIRES_IN: z.string().default("30m"),
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
+  REFRESH_TOKEN_COOKIE_NAME: z.string().default("lms_refresh_token"),
   PAYLOAD_ENCRYPTION_KEY: z.string().default("local-dev-only-payload-key-change-me"),
   REDIS_URL: z.string().default("redis://localhost:6379"),
   MQTT_URL: z.string().default("mqtt://localhost:1883"),

@@ -35,6 +35,7 @@ export const authTokensSchema = z.object({
   refreshToken: z.string(),
   tokenType: z.literal("Bearer"),
   expiresIn: z.literal("30m"),
+  refreshTokenExpiresAt: z.string(),
   user: authUserSchema,
 });
 

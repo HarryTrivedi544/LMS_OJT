@@ -50,6 +50,10 @@ export class AuthService {
   }
 
   async refresh(input: RefreshInput) {
+    if (!input.refreshToken) {
+      throw new HttpError(401, "missing_refresh_token", "Refresh token is required.");
+    }
+
     const tokenHash = hashRefreshToken(input.refreshToken);
     const storedToken = await this.repository.findValidRefreshToken(tokenHash);
 
@@ -69,6 +73,10 @@ export class AuthService {
   }
 
   async logout(input: LogoutInput, context: RequestContext) {
+    if (!input.refreshToken) {
+      return { revoked: true };
+    }
+
     const tokenHash = hashRefreshToken(input.refreshToken);
     const storedToken = await this.repository.findValidRefreshToken(tokenHash);
 
@@ -130,6 +138,7 @@ export class AuthService {
       refreshToken,
       tokenType: "Bearer" as const,
       expiresIn: "30m" as const,
+      refreshTokenExpiresAt: expiresAt.toISOString(),
       user: {
         id: user.id,
         email: user.email,
