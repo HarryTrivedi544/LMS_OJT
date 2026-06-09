@@ -1,4 +1,8 @@
-import type { AuthTokens, AuthUser } from "@lms/api-contracts";
+import type {
+  AuthTokens,
+  AuthUser,
+  UserManagementUser,
+} from "@lms/api-contracts";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
@@ -60,6 +64,47 @@ export const logout = () =>
 
 export const getCurrentUser = (accessToken: string) =>
   request<AuthUser & { status: string }>("/api/v1/auth/me", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const listUsers = (accessToken: string) =>
+  request<UserManagementUser[]>("/api/v1/users", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const createUser = (
+  accessToken: string,
+  input: {
+    email: string;
+    fullName: string;
+    role: string;
+    status: string;
+    password: string;
+  },
+) =>
+  request<UserManagementUser>("/api/v1/users", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const archiveUser = (accessToken: string, userId: string) =>
+  request<UserManagementUser>(`/api/v1/users/${userId}/archive`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const restoreUser = (accessToken: string, userId: string) =>
+  request<UserManagementUser>(`/api/v1/users/${userId}/restore`, {
+    method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },

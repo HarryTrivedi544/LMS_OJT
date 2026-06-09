@@ -99,14 +99,23 @@ function DashboardContent() {
           <span>LMS OJT</span>
         </div>
         <nav className="nav" aria-label="Main navigation">
-          {["Dashboard", "Candidates", "Timesheets", "Tasks", "Reports"].map(
-            (item, index) => (
-              <div className={`nav-item ${index === 0 ? "active" : ""}`} key={item}>
-                <Gauge size={16} aria-hidden="true" />
-                <span>{item}</span>
-              </div>
-            ),
-          )}
+          {[
+            ["Dashboard", "/dashboard"],
+            ["Users", "/users"],
+            ["Candidates", "/dashboard"],
+            ["Timesheets", "/dashboard"],
+            ["Tasks", "/dashboard"],
+            ["Reports", "/dashboard"],
+          ].map(([item, href], index) => (
+            <a
+              className={`nav-item ${index === 0 ? "active" : ""}`}
+              href={href}
+              key={item}
+            >
+              <Gauge size={16} aria-hidden="true" />
+              <span>{item}</span>
+            </a>
+          ))}
         </nav>
       </aside>
 

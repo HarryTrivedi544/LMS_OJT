@@ -30,6 +30,14 @@ export const authUserSchema = z.object({
   role: z.enum(["Super Admin", "Program Admin", "Program Lead", "Candidate"]),
 });
 
+export const userManagementUserSchema = authUserSchema.extend({
+  status: z.enum(["active", "inactive", "suspended", "archived"]),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+});
+
 export const authTokensSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
@@ -41,10 +49,17 @@ export const authTokensSchema = z.object({
 
 export const loginResponseSchema = apiSuccessSchema(authTokensSchema);
 export const refreshResponseSchema = apiSuccessSchema(authTokensSchema);
+export const listUsersResponseSchema = apiSuccessSchema(
+  z.array(userManagementUserSchema),
+);
+export const userResponseSchema = apiSuccessSchema(userManagementUserSchema);
 
 export type ApiError = z.infer<typeof apiErrorSchema>;
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
 export type AuthUser = z.infer<typeof authUserSchema>;
+export type UserManagementUser = z.infer<typeof userManagementUserSchema>;
 export type AuthTokens = z.infer<typeof authTokensSchema>;
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
 export type RefreshResponse = z.infer<typeof refreshResponseSchema>;
+export type ListUsersResponse = z.infer<typeof listUsersResponseSchema>;
+export type UserResponse = z.infer<typeof userResponseSchema>;

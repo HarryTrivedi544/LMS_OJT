@@ -86,6 +86,25 @@ export const programs = pgTable(
   ],
 );
 
+export const batches = pgTable(
+  "batches",
+  {
+    ...lifecycleColumns,
+    programId: uuid("program_id")
+      .notNull()
+      .references(() => programs.id),
+    name: text("name").notNull(),
+    code: text("code").notNull(),
+    status: workflowStatusEnum("status").notNull().default("draft"),
+  },
+  (table) => [
+    uniqueIndex("batches_code_unique_idx").on(table.code),
+    index("batches_program_id_idx").on(table.programId),
+    index("batches_status_idx").on(table.status),
+    index("batches_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
 export const candidates = pgTable(
   "candidates",
   {
@@ -96,6 +115,7 @@ export const candidates = pgTable(
     programId: uuid("program_id")
       .notNull()
       .references(() => programs.id),
+    batchId: uuid("batch_id").references(() => batches.id),
     candidateCode: text("candidate_code").notNull(),
     status: userStatusEnum("status").notNull().default("active"),
   },
@@ -103,8 +123,90 @@ export const candidates = pgTable(
     uniqueIndex("candidates_candidate_code_unique_idx").on(table.candidateCode),
     index("candidates_user_id_idx").on(table.userId),
     index("candidates_program_id_idx").on(table.programId),
+    index("candidates_batch_id_idx").on(table.batchId),
     index("candidates_status_idx").on(table.status),
     index("candidates_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const programAssignments = pgTable(
+  "program_assignments",
+  {
+    ...lifecycleColumns,
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    programId: uuid("program_id")
+      .notNull()
+      .references(() => programs.id),
+    role: roleEnum("role").notNull(),
+  },
+  (table) => [
+    uniqueIndex("program_assignments_user_program_role_unique_idx").on(
+      table.userId,
+      table.programId,
+      table.role,
+    ),
+    index("program_assignments_user_id_idx").on(table.userId),
+    index("program_assignments_program_id_idx").on(table.programId),
+    index("program_assignments_role_idx").on(table.role),
+    index("program_assignments_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const batchAssignments = pgTable(
+  "batch_assignments",
+  {
+    ...lifecycleColumns,
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    batchId: uuid("batch_id")
+      .notNull()
+      .references(() => batches.id),
+    role: roleEnum("role").notNull(),
+  },
+  (table) => [
+    uniqueIndex("batch_assignments_user_batch_role_unique_idx").on(
+      table.userId,
+      table.batchId,
+      table.role,
+    ),
+    index("batch_assignments_user_id_idx").on(table.userId),
+    index("batch_assignments_batch_id_idx").on(table.batchId),
+    index("batch_assignments_role_idx").on(table.role),
+    index("batch_assignments_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const permissions = pgTable(
+  "permissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    description: text("description").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("permissions_name_unique_idx").on(table.name)],
+);
+
+export const rolePermissions = pgTable(
+  "role_permissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    role: roleEnum("role").notNull(),
+    permissionId: uuid("permission_id")
+      .notNull()
+      .references(() => permissions.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("role_permissions_role_permission_unique_idx").on(
+      table.role,
+      table.permissionId,
+    ),
+    index("role_permissions_role_idx").on(table.role),
+    index("role_permissions_permission_id_idx").on(table.permissionId),
   ],
 );
 
