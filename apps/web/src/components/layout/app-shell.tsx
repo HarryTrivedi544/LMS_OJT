@@ -85,7 +85,7 @@ const navigationItems: NavigationItem[] = [
     href: "/timesheets",
     icon: ClipboardCheck,
     roles: ["Super Admin", "Program Admin", "Program Lead", "Candidate"],
-    isReady: false,
+    isReady: true,
   },
   {
     label: "Tasks",

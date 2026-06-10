@@ -152,6 +152,41 @@ export const candidateLogSchema = z.object({
   deletedAt: z.string().nullable(),
 });
 
+export const timesheetEntrySchema = z.object({
+  workDate: z.string(),
+  dayLabel: z.string(),
+  hours: z.number(),
+  minutes: z.number(),
+  summary: z.string().optional(),
+  blockers: z.string().optional(),
+});
+
+export const timesheetSchema = z.object({
+  id: z.string(),
+  candidateId: z.string(),
+  userId: z.string(),
+  fullName: z.string(),
+  email: z.email(),
+  candidateCode: z.string(),
+  programId: z.string(),
+  programName: z.string(),
+  batchId: z.string().nullable(),
+  batchName: z.string().nullable(),
+  weekStartDate: z.string(),
+  weekEndDate: z.string(),
+  totalMinutes: z.number(),
+  entries: z.array(timesheetEntrySchema),
+  status: workflowStatusSchema,
+  submittedAt: z.string(),
+  reviewedAt: z.string().nullable(),
+  reviewedBy: z.string().nullable(),
+  reviewNote: z.string().nullable(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+});
+
 export const authTokensSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
@@ -186,6 +221,10 @@ export const listCandidateLogsResponseSchema = apiSuccessSchema(
   z.array(candidateLogSchema),
 );
 export const candidateLogResponseSchema = apiSuccessSchema(candidateLogSchema);
+export const listTimesheetsResponseSchema = apiSuccessSchema(
+  z.array(timesheetSchema),
+);
+export const timesheetResponseSchema = apiSuccessSchema(timesheetSchema);
 
 export type ApiError = z.infer<typeof apiErrorSchema>;
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
@@ -198,6 +237,8 @@ export type Candidate = z.infer<typeof candidateSchema>;
 export type CandidateOptions = z.infer<typeof candidateOptionsSchema>;
 export type CandidateLogEntry = z.infer<typeof candidateLogEntrySchema>;
 export type CandidateLog = z.infer<typeof candidateLogSchema>;
+export type TimesheetEntry = z.infer<typeof timesheetEntrySchema>;
+export type Timesheet = z.infer<typeof timesheetSchema>;
 export type AuthTokens = z.infer<typeof authTokensSchema>;
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
 export type RefreshResponse = z.infer<typeof refreshResponseSchema>;
@@ -216,3 +257,5 @@ export type ListCandidateLogsResponse = z.infer<
   typeof listCandidateLogsResponseSchema
 >;
 export type CandidateLogResponse = z.infer<typeof candidateLogResponseSchema>;
+export type ListTimesheetsResponse = z.infer<typeof listTimesheetsResponseSchema>;
+export type TimesheetResponse = z.infer<typeof timesheetResponseSchema>;

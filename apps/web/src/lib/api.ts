@@ -8,6 +8,8 @@ import type {
   CandidateLogEntry,
   CandidateOptions,
   Program,
+  Timesheet,
+  TimesheetEntry,
   UserManagementUser,
 } from "@lms/api-contracts";
 
@@ -328,6 +330,80 @@ export const reviewCandidateLog = (
   },
 ) =>
   request<CandidateLog>(`/api/v1/candidate-logs/${logId}/review`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const listTimesheets = (
+  accessToken: string,
+  filters: {
+    programId?: string;
+    batchId?: string;
+    candidateId?: string;
+    status?: string;
+    weekStartDate?: string;
+  } = {},
+) =>
+  request<Timesheet[]>(
+    `/api/v1/timesheets${toQueryString({
+      includeArchived: "true",
+      programId: filters.programId,
+      batchId: filters.batchId,
+      candidateId: filters.candidateId,
+      status: filters.status,
+      weekStartDate: filters.weekStartDate,
+    })}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+export const createTimesheet = (
+  accessToken: string,
+  input: {
+    candidateId?: string;
+    weekStartDate: string;
+    weekEndDate: string;
+    entries: Array<Omit<TimesheetEntry, "minutes">>;
+  },
+) =>
+  request<Timesheet>("/api/v1/timesheets", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const updateTimesheet = (
+  accessToken: string,
+  timesheetId: string,
+  input: {
+    entries: Array<Omit<TimesheetEntry, "minutes">>;
+  },
+) =>
+  request<Timesheet>(`/api/v1/timesheets/${timesheetId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const reviewTimesheet = (
+  accessToken: string,
+  timesheetId: string,
+  input: {
+    status: string;
+    reviewNote?: string;
+  },
+) =>
+  request<Timesheet>(`/api/v1/timesheets/${timesheetId}/review`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,

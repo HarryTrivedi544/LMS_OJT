@@ -161,6 +161,35 @@ export const candidateLogs = pgTable(
   ],
 );
 
+export const timesheets = pgTable(
+  "timesheets",
+  {
+    ...lifecycleColumns,
+    candidateId: uuid("candidate_id")
+      .notNull()
+      .references(() => candidates.id),
+    weekStartDate: date("week_start_date").notNull(),
+    weekEndDate: date("week_end_date").notNull(),
+    totalMinutes: integer("total_minutes").notNull().default(0),
+    entries: jsonb("entries").notNull().default([]),
+    status: workflowStatusEnum("status").notNull().default("submitted"),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewNote: text("review_note"),
+  },
+  (table) => [
+    uniqueIndex("timesheets_candidate_week_start_unique_idx").on(
+      table.candidateId,
+      table.weekStartDate,
+    ),
+    index("timesheets_candidate_id_idx").on(table.candidateId),
+    index("timesheets_week_start_date_idx").on(table.weekStartDate),
+    index("timesheets_status_idx").on(table.status),
+    index("timesheets_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
 export const programAssignments = pgTable(
   "program_assignments",
   {

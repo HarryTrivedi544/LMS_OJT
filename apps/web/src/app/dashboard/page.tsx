@@ -106,9 +106,9 @@ function DashboardContent() {
               icon: GraduationCap,
             },
             {
-              label: "My Tasks",
-              note: "Task workflow will be available soon",
-              href: "/dashboard",
+              label: "Timesheets",
+              note: "Submit weekly hours for review",
+              href: "/timesheets",
               icon: FileText,
             },
             {

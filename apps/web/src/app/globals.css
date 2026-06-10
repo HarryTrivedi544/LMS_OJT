@@ -446,6 +446,11 @@ h2 {
   margin: 0 auto;
 }
 
+.timesheets-page {
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
 .users-grid {
   grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
   align-items: start;
@@ -572,7 +577,12 @@ h2 {
   grid-template-columns: minmax(180px, 1fr) minmax(150px, 180px) minmax(150px, 180px) auto;
 }
 
-.daily-log-entry-panel {
+.timesheet-filters {
+  grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) minmax(180px, 1.2fr) minmax(150px, 180px) auto;
+}
+
+.daily-log-entry-panel,
+.timesheet-entry-panel {
   overflow: hidden;
 }
 
@@ -602,6 +612,10 @@ h2 {
 
 .daily-log-table {
   min-width: 1380px;
+}
+
+.timesheet-table {
+  min-width: 920px;
 }
 
 .submitted-log-table {
