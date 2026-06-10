@@ -5,19 +5,18 @@ import {
   CalendarClock,
   ClipboardCheck,
   FileText,
-  Gauge,
-  LogOut,
+  GraduationCap,
   MessageSquare,
   Plus,
-  Search,
   ShieldCheck,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 
 import { workflowStatuses } from "@lms/shared";
 
-import { AuthGuard } from "../../components/auth/auth-guard";
 import { useAuth } from "../../components/auth/auth-provider";
+import { AppShell } from "../../components/layout/app-shell";
 
 const metrics = [
   {
@@ -86,70 +85,95 @@ const sideItems = [
 ];
 
 function DashboardContent() {
-  const { logout, user } = useAuth();
+  const { user } = useAuth();
   const statuses = workflowStatuses.slice(0, 4).join(" / ");
 
-  return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <span className="brand-mark">
-            <Gauge size={20} aria-hidden="true" />
-          </span>
-          <span>LMS OJT</span>
-        </div>
-        <nav className="nav" aria-label="Main navigation">
+  if (user?.role === "Candidate") {
+    return (
+      <AppShell title="Candidate Dashboard">
+        <section className="grid stats" aria-label="Candidate dashboard actions">
           {[
-            ["Dashboard", "/dashboard"],
-            ["Users", "/users"],
-            ["Candidates", "/dashboard"],
-            ["Timesheets", "/dashboard"],
-            ["Tasks", "/dashboard"],
-            ["Reports", "/dashboard"],
-          ].map(([item, href], index) => (
-            <a
-              className={`nav-item ${index === 0 ? "active" : ""}`}
-              href={href}
-              key={item}
-            >
-              <Gauge size={16} aria-hidden="true" />
-              <span>{item}</span>
-            </a>
+            {
+              label: "Daily Logs",
+              note: "Submit today or review previous logs",
+              href: "/daily-logs",
+              icon: ClipboardCheck,
+            },
+            {
+              label: "My Enrollment",
+              note: "View your program and batch",
+              href: "/candidates",
+              icon: GraduationCap,
+            },
+            {
+              label: "My Tasks",
+              note: "Task workflow will be available soon",
+              href: "/dashboard",
+              icon: FileText,
+            },
+            {
+              label: "Messages",
+              note: "Chat will be available soon",
+              href: "/dashboard",
+              icon: MessageSquare,
+            },
+          ].map((item) => (
+            <Link className="card metric dashboard-link-card" href={item.href} key={item.label}>
+              <div className="metric-header">
+                <span>{item.label}</span>
+                <item.icon size={18} aria-hidden="true" />
+              </div>
+              <p className="metric-note candidate-dashboard-note">{item.note}</p>
+            </Link>
           ))}
-        </nav>
-      </aside>
+        </section>
 
-      <main className="main">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">{user?.role} Workspace</p>
-            <h1>Operations Dashboard</h1>
-          </div>
-          <div className="actions">
-            <div className="user-chip">
-              <span>{user?.fullName}</span>
+        <section className="grid content-grid">
+          <article className="card panel">
+            <h2>Today</h2>
+            <div className="side-list">
+              <div className="side-item">
+                <span className="side-icon">
+                  <ClipboardCheck size={18} aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="row-title">Daily log</p>
+                  <p className="row-meta">Submit one structured log for today.</p>
+                </div>
+              </div>
+              <div className="side-item">
+                <span className="side-icon">
+                  <CalendarClock size={18} aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="row-title">Upcoming calls</p>
+                  <p className="row-meta">Call invites will appear here when enabled.</p>
+                </div>
+              </div>
             </div>
-            <button className="icon-button" type="button" title="Search">
-              <Search size={18} aria-hidden="true" />
-            </button>
-            <button className="icon-button" type="button" title="Notifications">
-              <Bell size={18} aria-hidden="true" />
-            </button>
-            <button className="command-button primary" type="button">
-              <Plus size={18} aria-hidden="true" />
-              New Task
-            </button>
-            <button
-              className="icon-button"
-              type="button"
-              title="Sign out"
-              onClick={() => void logout()}
-            >
-              <LogOut size={18} aria-hidden="true" />
-            </button>
-          </div>
-        </header>
+          </article>
 
+          <aside className="card panel">
+            <h2>Status</h2>
+            <p className="row-meta">
+              Candidate workflows currently available: enrollment view and daily logs.
+            </p>
+          </aside>
+        </section>
+      </AppShell>
+    );
+  }
+
+  return (
+    <AppShell
+      primaryAction={
+        <button className="command-button primary" type="button">
+          <Plus size={18} aria-hidden="true" />
+          New Task
+        </button>
+      }
+      title="Operations Dashboard"
+    >
         <section className="grid stats" aria-label="Dashboard metrics">
           {metrics.map((metric) => (
             <article className="card metric" key={metric.label}>
@@ -207,15 +231,10 @@ function DashboardContent() {
             <p className="row-meta flow-note">Workflow states: {statuses}</p>
           </aside>
         </section>
-      </main>
-    </div>
+    </AppShell>
   );
 }
 
 export default function DashboardPage() {
-  return (
-    <AuthGuard>
-      <DashboardContent />
-    </AuthGuard>
-  );
+  return <DashboardContent />;
 }

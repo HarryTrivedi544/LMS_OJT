@@ -1,6 +1,8 @@
 import {
   boolean,
+  date,
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
@@ -126,6 +128,36 @@ export const candidates = pgTable(
     index("candidates_batch_id_idx").on(table.batchId),
     index("candidates_status_idx").on(table.status),
     index("candidates_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const candidateLogs = pgTable(
+  "candidate_logs",
+  {
+    ...lifecycleColumns,
+    candidateId: uuid("candidate_id")
+      .notNull()
+      .references(() => candidates.id),
+    logDate: date("log_date").notNull(),
+    minutesSpent: integer("minutes_spent").notNull().default(0),
+    entries: jsonb("entries").notNull().default([]),
+    summary: text("summary").notNull(),
+    blockers: text("blockers"),
+    status: workflowStatusEnum("status").notNull().default("submitted"),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewNote: text("review_note"),
+  },
+  (table) => [
+    uniqueIndex("candidate_logs_candidate_log_date_unique_idx").on(
+      table.candidateId,
+      table.logDate,
+    ),
+    index("candidate_logs_candidate_id_idx").on(table.candidateId),
+    index("candidate_logs_log_date_idx").on(table.logDate),
+    index("candidate_logs_status_idx").on(table.status),
+    index("candidate_logs_deleted_at_idx").on(table.deletedAt),
   ],
 );
 

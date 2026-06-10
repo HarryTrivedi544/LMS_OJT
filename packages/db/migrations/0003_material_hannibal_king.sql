@@ -1,0 +1,1 @@
+ALTER TABLE "candidate_logs" ADD COLUMN "entries" jsonb DEFAULT '[]'::jsonb NOT NULL;

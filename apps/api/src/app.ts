@@ -8,7 +8,10 @@ import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { notFoundHandler } from "./middleware/not-found-handler.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
+import { candidateLogsRouter } from "./modules/candidate-logs/candidate-logs.routes.js";
+import { candidatesRouter } from "./modules/candidates/candidates.routes.js";
 import { healthRouter } from "./modules/health/health.routes.js";
+import { programsRouter } from "./modules/programs/programs.routes.js";
 import { usersRouter } from "./modules/users/users.routes.js";
 
 export const createApp = () => {
@@ -28,6 +31,9 @@ export const createApp = () => {
   app.use("/api/v1/health", healthRouter);
   app.use("/api/v1/auth", authRouter);
   app.use("/api/v1/users", usersRouter);
+  app.use("/api/v1/programs", programsRouter);
+  app.use("/api/v1/candidates", candidatesRouter);
+  app.use("/api/v1/candidate-logs", candidateLogsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

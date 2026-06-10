@@ -5,8 +5,8 @@ import { roles, userStatuses } from "@lms/shared";
 import { FormEvent, useEffect, useState } from "react";
 import { Archive, RefreshCcw, UserPlus } from "lucide-react";
 
-import { AuthGuard } from "../../components/auth/auth-guard";
 import { useAuth } from "../../components/auth/auth-provider";
+import { AppShell } from "../../components/layout/app-shell";
 import {
   archiveUser,
   createUser,
@@ -31,7 +31,7 @@ function UsersContent() {
   const [error, setError] = useState<string | null>(null);
 
   const loadUsers = async () => {
-    if (!accessToken) {
+    if (!accessToken || user?.role !== "Super Admin") {
       return;
     }
 
@@ -44,12 +44,12 @@ function UsersContent() {
     void loadUsers().catch((loadError) => {
       setError(loadError instanceof Error ? loadError.message : "Failed to load users.");
     });
-  }, [accessToken]);
+  }, [accessToken, user?.role]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!accessToken) {
+    if (!accessToken || user?.role !== "Super Admin") {
       return;
     }
 
@@ -70,7 +70,7 @@ function UsersContent() {
   };
 
   const handleArchive = async (targetUser: UserManagementUser) => {
-    if (!accessToken) {
+    if (!accessToken || user?.role !== "Super Admin") {
       return;
     }
 
@@ -95,14 +95,11 @@ function UsersContent() {
   };
 
   return (
-    <main className="main users-page">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">{user?.role} Workspace</p>
-          <h1>User Management</h1>
-        </div>
-      </header>
-
+    <AppShell
+      allowedRoles={["Super Admin"]}
+      contentClassName="users-page"
+      title="User Management"
+    >
       <section className="grid users-grid">
         <article className="card panel">
           <h2>Create User</h2>
@@ -224,14 +221,10 @@ function UsersContent() {
           </div>
         </article>
       </section>
-    </main>
+    </AppShell>
   );
 }
 
 export default function UsersPage() {
-  return (
-    <AuthGuard>
-      <UsersContent />
-    </AuthGuard>
-  );
+  return <UsersContent />;
 }

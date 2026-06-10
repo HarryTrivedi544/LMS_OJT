@@ -15,6 +15,20 @@
       "when": 1781013716723,
       "tag": "0001_acoustic_selene",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781072930746,
+      "tag": "0002_absent_thundra",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781076097132,
+      "tag": "0003_material_hannibal_king",
+      "breakpoints": true
     }
   ]
 }
