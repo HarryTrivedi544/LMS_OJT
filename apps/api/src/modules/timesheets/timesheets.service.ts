@@ -1,5 +1,10 @@
 import type { Role } from "@lms/shared";
 
+import {
+  notifyTimesheetRevisionRequired,
+  notifyTimesheetReviewed,
+  notifyTimesheetSubmitted,
+} from "../../integrations/notifications/workflow-notifications.js";
 import { HttpError } from "../../errors/http-error.js";
 import type {
   CreateTimesheetInput,
@@ -155,6 +160,11 @@ export class TimesheetsService {
       actorId: context.actorId,
       payload: toTimesheetResponse(timesheet),
     });
+    await notifyTimesheetSubmitted({
+      candidateId: timesheet.candidateId,
+      fullName: timesheet.fullName,
+      weekStartDate: timesheet.weekStartDate,
+    });
 
     return toTimesheetResponse(timesheet);
   }
@@ -261,6 +271,20 @@ export class TimesheetsService {
       actorId: context.actorId,
       payload: toTimesheetResponse(reviewedTimesheet),
     });
+
+    if (input.status === "revision_required") {
+      await notifyTimesheetRevisionRequired({
+        candidateUserId: reviewedTimesheet.userId,
+        weekStartDate: reviewedTimesheet.weekStartDate,
+        reviewNote: input.reviewNote,
+      });
+    } else if (input.status === "approved" || input.status === "rejected") {
+      await notifyTimesheetReviewed({
+        candidateUserId: reviewedTimesheet.userId,
+        weekStartDate: reviewedTimesheet.weekStartDate,
+        status: input.status,
+      });
+    }
 
     return toTimesheetResponse(reviewedTimesheet);
   }

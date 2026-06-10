@@ -1,5 +1,6 @@
 import type { Role } from "@lms/shared";
 
+import { notifyDailyLogSubmitted } from "../../integrations/notifications/workflow-notifications.js";
 import { HttpError } from "../../errors/http-error.js";
 import type {
   CandidateLogEntryInput,
@@ -172,6 +173,11 @@ export class CandidateLogsService {
       actorType: "user",
       actorId: context.actorId,
       payload: toCandidateLogResponse(log),
+    });
+    await notifyDailyLogSubmitted({
+      candidateId: log.candidateId,
+      fullName: log.fullName,
+      logDate: log.logDate,
     });
 
     return toCandidateLogResponse(log);

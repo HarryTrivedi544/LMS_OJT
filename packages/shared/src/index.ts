@@ -59,3 +59,33 @@ export const domainEventNames = [
 ] as const;
 
 export type DomainEventName = (typeof domainEventNames)[number];
+
+export const notificationJobTypes = [
+  "workflow",
+  "daily_log_reminder",
+  "weekly_timesheet_reminder",
+] as const;
+
+export type NotificationJobType = (typeof notificationJobTypes)[number];
+
+export type WorkflowNotificationJob = {
+  type: "workflow";
+  userId: string;
+  title: string;
+  body: string;
+  triggerName: string;
+  metadata?: Record<string, unknown>;
+};
+
+export type DailyLogReminderJob = {
+  type: "daily_log_reminder";
+};
+
+export type WeeklyTimesheetReminderJob = {
+  type: "weekly_timesheet_reminder";
+};
+
+export type NotificationJobPayload =
+  | WorkflowNotificationJob
+  | DailyLogReminderJob
+  | WeeklyTimesheetReminderJob;

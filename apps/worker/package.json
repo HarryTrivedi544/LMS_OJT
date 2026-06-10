@@ -10,13 +10,17 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@lms/db": "workspace:*",
     "@lms/shared": "workspace:*",
     "bullmq": "^5.66.0",
     "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.45.1",
+    "nodemailer": "^7.0.11",
     "zod": "^4.2.1"
   },
   "devDependencies": {
     "@types/node": "^24.10.2",
+    "@types/nodemailer": "^7.0.11",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }

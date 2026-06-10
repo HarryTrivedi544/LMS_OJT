@@ -161,6 +161,160 @@ export const timesheetEntrySchema = z.object({
   blockers: z.string().optional(),
 });
 
+export const notificationSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  title: z.string(),
+  body: z.string(),
+  triggerName: z.string(),
+  channel: z.enum(["email", "in_app", "push"]),
+  readAt: z.string().nullable(),
+  metadata: z.record(z.string(), z.unknown()),
+  emailSentAt: z.string().nullable(),
+  createdAt: z.string(),
+});
+
+export const notificationPreferencesSchema = z.object({
+  emailEnabled: z.boolean(),
+  inAppEnabled: z.boolean(),
+});
+
+export const chatRoomSchema = z.object({
+  id: z.string(),
+  candidateId: z.string(),
+  userId: z.string(),
+  fullName: z.string(),
+  email: z.email(),
+  candidateCode: z.string(),
+  programId: z.string(),
+  programName: z.string(),
+  batchId: z.string().nullable(),
+  batchName: z.string().nullable(),
+  title: z.string(),
+  lastMessageAt: z.string().nullable(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const chatMessageSchema = z.object({
+  id: z.string(),
+  roomId: z.string(),
+  senderUserId: z.string(),
+  senderName: z.string(),
+  body: z.string(),
+  createdAt: z.string(),
+});
+
+export const callSchema = z.object({
+  id: z.string(),
+  candidateId: z.string(),
+  userId: z.string(),
+  fullName: z.string(),
+  email: z.email(),
+  candidateCode: z.string(),
+  programId: z.string(),
+  programName: z.string(),
+  batchId: z.string().nullable(),
+  batchName: z.string().nullable(),
+  scheduledBy: z.string(),
+  schedulerName: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  scheduledStartAt: z.string(),
+  scheduledEndAt: z.string(),
+  meetingLink: z.string().nullable(),
+  status: workflowStatusSchema,
+  cancelledAt: z.string().nullable(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+});
+
+export const storedFileSchema = z.object({
+  id: z.string(),
+  originalName: z.string(),
+  mimeType: z.string(),
+  sizeBytes: z.number(),
+  module: z.string(),
+  ownerUserId: z.string(),
+  candidateId: z.string().nullable(),
+  isPrivate: z.boolean(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+  downloadUrl: z.string().nullable(),
+});
+
+export const kpiScoreEntrySchema = z.object({
+  criterion: z.string(),
+  score: z.number(),
+  maxScore: z.number(),
+  notes: z.string().optional(),
+});
+
+export const kpiReviewSchema = z.object({
+  id: z.string(),
+  candidateId: z.string(),
+  userId: z.string(),
+  fullName: z.string(),
+  email: z.email(),
+  candidateCode: z.string(),
+  programId: z.string(),
+  programName: z.string(),
+  batchId: z.string().nullable(),
+  batchName: z.string().nullable(),
+  reviewerId: z.string(),
+  reviewerName: z.string(),
+  reviewPeriod: z.string(),
+  scores: z.array(kpiScoreEntrySchema),
+  overallScore: z.number().nullable(),
+  feedback: z.string().nullable(),
+  status: workflowStatusSchema,
+  completedAt: z.string().nullable(),
+  reviewedAt: z.string().nullable(),
+  reviewedBy: z.string().nullable(),
+  reviewNote: z.string().nullable(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+});
+
+export const taskBriefSchema = z.object({
+  id: z.string(),
+  candidateId: z.string(),
+  userId: z.string(),
+  fullName: z.string(),
+  email: z.email(),
+  candidateCode: z.string(),
+  programId: z.string(),
+  programName: z.string(),
+  batchId: z.string().nullable(),
+  batchName: z.string().nullable(),
+  assignedBy: z.string(),
+  assignedByName: z.string(),
+  title: z.string(),
+  description: z.string(),
+  taskReference: z.string().nullable(),
+  priority: z.enum(["low", "medium", "high"]),
+  dueDate: z.string().nullable(),
+  status: workflowStatusSchema,
+  acknowledgedAt: z.string().nullable(),
+  submissionSummary: z.string().nullable(),
+  submissionDeliverables: z.string().nullable(),
+  submittedAt: z.string().nullable(),
+  reviewedAt: z.string().nullable(),
+  reviewedBy: z.string().nullable(),
+  reviewNote: z.string().nullable(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+});
+
 export const timesheetSchema = z.object({
   id: z.string(),
   candidateId: z.string(),
@@ -225,6 +379,36 @@ export const listTimesheetsResponseSchema = apiSuccessSchema(
   z.array(timesheetSchema),
 );
 export const timesheetResponseSchema = apiSuccessSchema(timesheetSchema);
+export const listTaskBriefsResponseSchema = apiSuccessSchema(
+  z.array(taskBriefSchema),
+);
+export const taskBriefResponseSchema = apiSuccessSchema(taskBriefSchema);
+export const listKpiReviewsResponseSchema = apiSuccessSchema(
+  z.array(kpiReviewSchema),
+);
+export const kpiReviewResponseSchema = apiSuccessSchema(kpiReviewSchema);
+export const listStoredFilesResponseSchema = apiSuccessSchema(
+  z.array(storedFileSchema),
+);
+export const storedFileResponseSchema = apiSuccessSchema(storedFileSchema);
+export const listNotificationsResponseSchema = apiSuccessSchema(
+  z.array(notificationSchema),
+);
+export const notificationResponseSchema = apiSuccessSchema(notificationSchema);
+export const unreadCountResponseSchema = apiSuccessSchema(
+  z.object({ count: z.number() }),
+);
+export const notificationPreferencesResponseSchema = apiSuccessSchema(
+  notificationPreferencesSchema,
+);
+export const listChatRoomsResponseSchema = apiSuccessSchema(z.array(chatRoomSchema));
+export const chatRoomResponseSchema = apiSuccessSchema(chatRoomSchema);
+export const listChatMessagesResponseSchema = apiSuccessSchema(
+  z.array(chatMessageSchema),
+);
+export const chatMessageResponseSchema = apiSuccessSchema(chatMessageSchema);
+export const listCallsResponseSchema = apiSuccessSchema(z.array(callSchema));
+export const callResponseSchema = apiSuccessSchema(callSchema);
 
 export type ApiError = z.infer<typeof apiErrorSchema>;
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
@@ -239,6 +423,12 @@ export type CandidateLogEntry = z.infer<typeof candidateLogEntrySchema>;
 export type CandidateLog = z.infer<typeof candidateLogSchema>;
 export type TimesheetEntry = z.infer<typeof timesheetEntrySchema>;
 export type Timesheet = z.infer<typeof timesheetSchema>;
+export type Notification = z.infer<typeof notificationSchema>;
+export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
+export type StoredFile = z.infer<typeof storedFileSchema>;
+export type KpiScoreEntry = z.infer<typeof kpiScoreEntrySchema>;
+export type KpiReview = z.infer<typeof kpiReviewSchema>;
+export type TaskBrief = z.infer<typeof taskBriefSchema>;
 export type AuthTokens = z.infer<typeof authTokensSchema>;
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
 export type RefreshResponse = z.infer<typeof refreshResponseSchema>;
@@ -259,3 +449,24 @@ export type ListCandidateLogsResponse = z.infer<
 export type CandidateLogResponse = z.infer<typeof candidateLogResponseSchema>;
 export type ListTimesheetsResponse = z.infer<typeof listTimesheetsResponseSchema>;
 export type TimesheetResponse = z.infer<typeof timesheetResponseSchema>;
+export type ListTaskBriefsResponse = z.infer<typeof listTaskBriefsResponseSchema>;
+export type TaskBriefResponse = z.infer<typeof taskBriefResponseSchema>;
+export type ListKpiReviewsResponse = z.infer<typeof listKpiReviewsResponseSchema>;
+export type KpiReviewResponse = z.infer<typeof kpiReviewResponseSchema>;
+export type ListStoredFilesResponse = z.infer<typeof listStoredFilesResponseSchema>;
+export type StoredFileResponse = z.infer<typeof storedFileResponseSchema>;
+export type ListNotificationsResponse = z.infer<typeof listNotificationsResponseSchema>;
+export type NotificationResponse = z.infer<typeof notificationResponseSchema>;
+export type UnreadCountResponse = z.infer<typeof unreadCountResponseSchema>;
+export type NotificationPreferencesResponse = z.infer<
+  typeof notificationPreferencesResponseSchema
+>;
+export type ChatRoom = z.infer<typeof chatRoomSchema>;
+export type ChatMessage = z.infer<typeof chatMessageSchema>;
+export type Call = z.infer<typeof callSchema>;
+export type ListChatRoomsResponse = z.infer<typeof listChatRoomsResponseSchema>;
+export type ChatRoomResponse = z.infer<typeof chatRoomResponseSchema>;
+export type ListChatMessagesResponse = z.infer<typeof listChatMessagesResponseSchema>;
+export type ChatMessageResponse = z.infer<typeof chatMessageResponseSchema>;
+export type ListCallsResponse = z.infer<typeof listCallsResponseSchema>;
+export type CallResponse = z.infer<typeof callResponseSchema>;

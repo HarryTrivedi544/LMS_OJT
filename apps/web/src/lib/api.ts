@@ -3,11 +3,20 @@ import type {
   AuthTokens,
   AuthUser,
   Batch,
+  Call,
+  ChatMessage,
+  ChatRoom,
   Candidate,
   CandidateLog,
   CandidateLogEntry,
   CandidateOptions,
   Program,
+  KpiReview,
+  KpiScoreEntry,
+  Notification,
+  NotificationPreferences,
+  StoredFile,
+  TaskBrief,
   Timesheet,
   TimesheetEntry,
   UserManagementUser,
@@ -410,6 +419,372 @@ export const reviewTimesheet = (
     },
     body: JSON.stringify(input),
   });
+
+export const listTaskBriefs = (
+  accessToken: string,
+  filters: {
+    programId?: string;
+    batchId?: string;
+    candidateId?: string;
+    status?: string;
+  } = {},
+) =>
+  request<TaskBrief[]>(
+    `/api/v1/task-briefs${toQueryString({
+      includeArchived: "true",
+      programId: filters.programId,
+      batchId: filters.batchId,
+      candidateId: filters.candidateId,
+      status: filters.status,
+    })}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+export const createTaskBrief = (
+  accessToken: string,
+  input: {
+    candidateId: string;
+    title: string;
+    description: string;
+    taskReference?: string;
+    priority?: "low" | "medium" | "high";
+    dueDate?: string;
+  },
+) =>
+  request<TaskBrief>("/api/v1/task-briefs", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const acknowledgeTaskBrief = (accessToken: string, taskBriefId: string) =>
+  request<TaskBrief>(`/api/v1/task-briefs/${taskBriefId}/acknowledge`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const submitTaskBrief = (
+  accessToken: string,
+  taskBriefId: string,
+  input: {
+    submissionSummary: string;
+    submissionDeliverables?: string;
+  },
+) =>
+  request<TaskBrief>(`/api/v1/task-briefs/${taskBriefId}/submit`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const reviewTaskBrief = (
+  accessToken: string,
+  taskBriefId: string,
+  input: {
+    status: string;
+    reviewNote?: string;
+  },
+) =>
+  request<TaskBrief>(`/api/v1/task-briefs/${taskBriefId}/review`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const listKpiReviews = (
+  accessToken: string,
+  filters: {
+    programId?: string;
+    batchId?: string;
+    candidateId?: string;
+    status?: string;
+    reviewPeriod?: string;
+  } = {},
+) =>
+  request<KpiReview[]>(
+    `/api/v1/kpi-reviews${toQueryString({
+      includeArchived: "true",
+      programId: filters.programId,
+      batchId: filters.batchId,
+      candidateId: filters.candidateId,
+      status: filters.status,
+      reviewPeriod: filters.reviewPeriod,
+    })}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+export const createKpiReview = (
+  accessToken: string,
+  input: {
+    candidateId: string;
+    reviewPeriod: string;
+    scores: KpiScoreEntry[];
+    feedback?: string;
+  },
+) =>
+  request<KpiReview>("/api/v1/kpi-reviews", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const updateKpiReview = (
+  accessToken: string,
+  kpiReviewId: string,
+  input: {
+    scores: KpiScoreEntry[];
+    feedback?: string;
+  },
+) =>
+  request<KpiReview>(`/api/v1/kpi-reviews/${kpiReviewId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const completeKpiReview = (accessToken: string, kpiReviewId: string) =>
+  request<KpiReview>(`/api/v1/kpi-reviews/${kpiReviewId}/complete`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const listFiles = (
+  accessToken: string,
+  filters: { module?: string; candidateId?: string } = {},
+) =>
+  request<StoredFile[]>(
+    `/api/v1/files${toQueryString({
+      module: filters.module,
+      candidateId: filters.candidateId,
+    })}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+export const listNotifications = (
+  accessToken: string,
+  filters: { unreadOnly?: boolean } = {},
+) =>
+  request<Notification[]>(
+    `/api/v1/notifications${toQueryString({
+      unreadOnly: filters.unreadOnly ? "true" : undefined,
+    })}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+export const getUnreadNotificationCount = (accessToken: string) =>
+  request<{ count: number }>("/api/v1/notifications/unread-count", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const markNotificationRead = (accessToken: string, notificationId: string) =>
+  request<Notification>(`/api/v1/notifications/${notificationId}/read`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const markAllNotificationsRead = (accessToken: string) =>
+  request<{ updated: boolean }>("/api/v1/notifications/read-all", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const getNotificationPreferences = (accessToken: string) =>
+  request<NotificationPreferences>("/api/v1/notifications/preferences", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const updateNotificationPreferences = (
+  accessToken: string,
+  input: NotificationPreferences,
+) =>
+  request<NotificationPreferences>("/api/v1/notifications/preferences", {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const listChatRooms = (
+  accessToken: string,
+  filters: { candidateId?: string } = {},
+) =>
+  request<ChatRoom[]>(
+    `/api/v1/chat/rooms${toQueryString({ candidateId: filters.candidateId })}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+export const ensureChatRoom = (accessToken: string, candidateId: string) =>
+  request<ChatRoom>("/api/v1/chat/rooms", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ candidateId }),
+  });
+
+export const listChatMessages = (accessToken: string, roomId: string) =>
+  request<ChatMessage[]>(`/api/v1/chat/rooms/${roomId}/messages`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const sendChatMessage = (
+  accessToken: string,
+  roomId: string,
+  body: string,
+) =>
+  request<ChatMessage>(`/api/v1/chat/rooms/${roomId}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ body }),
+  });
+
+export const listCalls = (
+  accessToken: string,
+  filters: {
+    programId?: string;
+    batchId?: string;
+    candidateId?: string;
+    status?: string;
+  } = {},
+) =>
+  request<Call[]>(
+    `/api/v1/calls${toQueryString({
+      includeArchived: "true",
+      programId: filters.programId,
+      batchId: filters.batchId,
+      candidateId: filters.candidateId,
+      status: filters.status,
+    })}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+export const createCall = (
+  accessToken: string,
+  input: {
+    candidateId: string;
+    title: string;
+    description?: string;
+    scheduledStartAt: string;
+    scheduledEndAt: string;
+    meetingLink?: string;
+  },
+) =>
+  request<Call>("/api/v1/calls", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const updateCall = (
+  accessToken: string,
+  callId: string,
+  input: {
+    title?: string;
+    description?: string;
+    scheduledStartAt?: string;
+    scheduledEndAt?: string;
+    meetingLink?: string;
+  },
+) =>
+  request<Call>(`/api/v1/calls/${callId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const cancelCall = (accessToken: string, callId: string) =>
+  request<Call>(`/api/v1/calls/${callId}/cancel`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const uploadFile = (
+  accessToken: string,
+  input: { file: File; module: string; candidateId?: string },
+) => {
+  const formData = new FormData();
+  formData.append("file", input.file);
+  formData.append("module", input.module);
+  if (input.candidateId) {
+    formData.append("candidateId", input.candidateId);
+  }
+
+  return fetch(`${apiBaseUrl}/api/v1/files/upload`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: formData,
+  }).then(async (response) => {
+    const payload = (await response.json()) as
+      | { success: true; data: StoredFile }
+      | { success: false; error: { message: string } };
+
+    if (!response.ok || !payload.success) {
+      throw new Error(payload.success ? "Upload failed." : payload.error.message);
+    }
+
+    return payload.data;
+  });
+};
 
 export const createCandidate = (
   accessToken: string,

@@ -9,9 +9,15 @@ import { errorHandler } from "./middleware/error-handler.js";
 import { notFoundHandler } from "./middleware/not-found-handler.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { candidateLogsRouter } from "./modules/candidate-logs/candidate-logs.routes.js";
+import { callsRouter } from "./modules/calls/calls.routes.js";
+import { chatRouter } from "./modules/chat/chat.routes.js";
 import { candidatesRouter } from "./modules/candidates/candidates.routes.js";
+import { filesRouter } from "./modules/files/files.routes.js";
 import { healthRouter } from "./modules/health/health.routes.js";
+import { kpiReviewsRouter } from "./modules/kpi-reviews/kpi-reviews.routes.js";
+import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { programsRouter } from "./modules/programs/programs.routes.js";
+import { taskBriefsRouter } from "./modules/task-briefs/task-briefs.routes.js";
 import { timesheetsRouter } from "./modules/timesheets/timesheets.routes.js";
 import { usersRouter } from "./modules/users/users.routes.js";
 
@@ -35,7 +41,13 @@ export const createApp = () => {
   app.use("/api/v1/programs", programsRouter);
   app.use("/api/v1/candidates", candidatesRouter);
   app.use("/api/v1/candidate-logs", candidateLogsRouter);
+  app.use("/api/v1/files", filesRouter);
   app.use("/api/v1/timesheets", timesheetsRouter);
+  app.use("/api/v1/task-briefs", taskBriefsRouter);
+  app.use("/api/v1/kpi-reviews", kpiReviewsRouter);
+  app.use("/api/v1/notifications", notificationsRouter);
+  app.use("/api/v1/chat", chatRouter);
+  app.use("/api/v1/calls", callsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

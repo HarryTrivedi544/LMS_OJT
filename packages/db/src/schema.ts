@@ -45,6 +45,8 @@ export const workflowStatusEnum = pgEnum("workflow_status", [
   "cancelled",
 ]);
 
+export const taskPriorityEnum = pgEnum("task_priority", ["low", "medium", "high"]);
+
 const lifecycleColumns = {
   id: uuid("id").primaryKey().defaultRandom(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -158,6 +160,95 @@ export const candidateLogs = pgTable(
     index("candidate_logs_log_date_idx").on(table.logDate),
     index("candidate_logs_status_idx").on(table.status),
     index("candidate_logs_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const files = pgTable(
+  "files",
+  {
+    ...lifecycleColumns,
+    originalName: text("original_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    storageKey: text("storage_key").notNull(),
+    module: text("module").notNull(),
+    ownerUserId: uuid("owner_user_id")
+      .notNull()
+      .references(() => users.id),
+    candidateId: uuid("candidate_id").references(() => candidates.id),
+    isPrivate: boolean("is_private").notNull().default(true),
+  },
+  (table) => [
+    uniqueIndex("files_storage_key_unique_idx").on(table.storageKey),
+    index("files_owner_user_id_idx").on(table.ownerUserId),
+    index("files_candidate_id_idx").on(table.candidateId),
+    index("files_module_idx").on(table.module),
+    index("files_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const kpiReviews = pgTable(
+  "kpi_reviews",
+  {
+    ...lifecycleColumns,
+    candidateId: uuid("candidate_id")
+      .notNull()
+      .references(() => candidates.id),
+    reviewerId: uuid("reviewer_id")
+      .notNull()
+      .references(() => users.id),
+    reviewPeriod: text("review_period").notNull(),
+    scores: jsonb("scores").notNull().default([]),
+    overallScore: integer("overall_score"),
+    feedback: text("feedback"),
+    status: workflowStatusEnum("status").notNull().default("draft"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewNote: text("review_note"),
+  },
+  (table) => [
+    uniqueIndex("kpi_reviews_candidate_period_unique_idx").on(
+      table.candidateId,
+      table.reviewPeriod,
+    ),
+    index("kpi_reviews_candidate_id_idx").on(table.candidateId),
+    index("kpi_reviews_reviewer_id_idx").on(table.reviewerId),
+    index("kpi_reviews_status_idx").on(table.status),
+    index("kpi_reviews_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const taskBriefs = pgTable(
+  "task_briefs",
+  {
+    ...lifecycleColumns,
+    candidateId: uuid("candidate_id")
+      .notNull()
+      .references(() => candidates.id),
+    assignedBy: uuid("assigned_by")
+      .notNull()
+      .references(() => users.id),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    taskReference: text("task_reference"),
+    priority: taskPriorityEnum("priority").notNull().default("medium"),
+    dueDate: date("due_date"),
+    status: workflowStatusEnum("status").notNull().default("draft"),
+    acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }),
+    submissionSummary: text("submission_summary"),
+    submissionDeliverables: text("submission_deliverables"),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewNote: text("review_note"),
+  },
+  (table) => [
+    index("task_briefs_candidate_id_idx").on(table.candidateId),
+    index("task_briefs_assigned_by_idx").on(table.assignedBy),
+    index("task_briefs_status_idx").on(table.status),
+    index("task_briefs_due_date_idx").on(table.dueDate),
+    index("task_briefs_deleted_at_idx").on(table.deletedAt),
   ],
 );
 
@@ -345,6 +436,94 @@ export const evidenceRegistry = pgTable(
     index("evidence_registry_candidate_id_idx").on(table.candidateId),
     index("evidence_registry_entity_idx").on(table.entityType, table.entityId),
     index("evidence_registry_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const chatRooms = pgTable(
+  "chat_rooms",
+  {
+    ...lifecycleColumns,
+    candidateId: uuid("candidate_id")
+      .notNull()
+      .references(() => candidates.id),
+    title: text("title").notNull(),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("chat_rooms_candidate_id_unique_idx").on(table.candidateId),
+    index("chat_rooms_deleted_at_idx").on(table.deletedAt),
+    index("chat_rooms_last_message_at_idx").on(table.lastMessageAt),
+  ],
+);
+
+export const chatMessages = pgTable(
+  "chat_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => chatRooms.id),
+    senderUserId: uuid("sender_user_id")
+      .notNull()
+      .references(() => users.id),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("chat_messages_room_id_idx").on(table.roomId),
+    index("chat_messages_sender_user_id_idx").on(table.senderUserId),
+    index("chat_messages_created_at_idx").on(table.createdAt),
+  ],
+);
+
+export const calls = pgTable(
+  "calls",
+  {
+    ...lifecycleColumns,
+    candidateId: uuid("candidate_id")
+      .notNull()
+      .references(() => candidates.id),
+    scheduledBy: uuid("scheduled_by")
+      .notNull()
+      .references(() => users.id),
+    title: text("title").notNull(),
+    description: text("description"),
+    scheduledStartAt: timestamp("scheduled_start_at", { withTimezone: true }).notNull(),
+    scheduledEndAt: timestamp("scheduled_end_at", { withTimezone: true }).notNull(),
+    meetingLink: text("meeting_link"),
+    status: workflowStatusEnum("status").notNull().default("submitted"),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("calls_candidate_id_idx").on(table.candidateId),
+    index("calls_scheduled_by_idx").on(table.scheduledBy),
+    index("calls_scheduled_start_at_idx").on(table.scheduledStartAt),
+    index("calls_status_idx").on(table.status),
+    index("calls_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    triggerName: text("trigger_name").notNull(),
+    channel: notificationChannelEnum("channel").notNull().default("in_app"),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    metadata: jsonb("metadata").notNull().default({}),
+    emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("notifications_user_id_idx").on(table.userId),
+    index("notifications_read_at_idx").on(table.readAt),
+    index("notifications_trigger_name_idx").on(table.triggerName),
+    index("notifications_created_at_idx").on(table.createdAt),
   ],
 );
 

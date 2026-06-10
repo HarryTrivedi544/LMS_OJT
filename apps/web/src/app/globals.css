@@ -847,6 +847,68 @@ h2 {
   border-top: 1px solid var(--line);
 }
 
+.stack-form {
+  display: grid;
+  gap: 12px;
+}
+
+.stack-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+
+.notification-button {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #d64545;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.chat-message-list {
+  display: grid;
+  gap: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.chat-message-row {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--surface);
+}
+
+.chat-compose {
+  margin-top: 12px;
+}
+
+.program-row.active {
+  border-color: var(--accent);
+}
+
 .assignment-list {
   margin-top: 10px;
 }
@@ -951,7 +1013,8 @@ h2 {
   .date-inline,
   .daily-log-main,
   .review-controls,
-  .assignment-form {
+  .assignment-form,
+  .stack-form .review-controls {
     grid-template-columns: 1fr;
   }
 

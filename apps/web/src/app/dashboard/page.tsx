@@ -112,10 +112,22 @@ function DashboardContent() {
               icon: FileText,
             },
             {
-              label: "Messages",
-              note: "Chat will be available soon",
-              href: "/dashboard",
+              label: "My Tasks",
+              note: "Acknowledge and submit assigned task briefs",
+              href: "/tasks",
+              icon: FileText,
+            },
+            {
+              label: "Chat",
+              note: "Message your program lead",
+              href: "/chat",
               icon: MessageSquare,
+            },
+            {
+              label: "Calls",
+              note: "View scheduled call invites",
+              href: "/calls",
+              icon: CalendarClock,
             },
           ].map((item) => (
             <Link className="card metric dashboard-link-card" href={item.href} key={item.label}>
@@ -156,7 +168,8 @@ function DashboardContent() {
           <aside className="card panel">
             <h2>Status</h2>
             <p className="row-meta">
-              Candidate workflows currently available: enrollment view and daily logs.
+              Candidate workflows currently available: enrollment, daily logs, timesheets, and
+              tasks.
             </p>
           </aside>
         </section>

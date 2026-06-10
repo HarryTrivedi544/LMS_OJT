@@ -3,6 +3,7 @@
 import type { Role } from "@lms/shared";
 import {
   Bell,
+  CalendarClock,
   ClipboardCheck,
   FileText,
   Gauge,
@@ -16,8 +17,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
+import { getUnreadNotificationCount } from "../../lib/api";
 import { AuthGuard } from "../auth/auth-guard";
 import { useAuth } from "../auth/auth-provider";
 
@@ -92,14 +94,35 @@ const navigationItems: NavigationItem[] = [
     href: "/tasks",
     icon: FileText,
     roles: ["Super Admin", "Program Admin", "Program Lead", "Candidate"],
-    isReady: false,
+    isReady: true,
+  },
+  {
+    label: "KPI Reviews",
+    href: "/kpi-reviews",
+    icon: ShieldCheck,
+    roles: ["Super Admin", "Program Admin", "Program Lead", "Candidate"],
+    isReady: true,
+  },
+  {
+    label: "My Files",
+    href: "/profile",
+    icon: FileText,
+    roles: ["Super Admin", "Program Admin", "Program Lead", "Candidate"],
+    isReady: true,
   },
   {
     label: "Chat",
     href: "/chat",
     icon: MessageSquare,
     roles: ["Super Admin", "Program Admin", "Program Lead", "Candidate"],
-    isReady: false,
+    isReady: true,
+  },
+  {
+    label: "Calls",
+    href: "/calls",
+    icon: CalendarClock,
+    roles: ["Super Admin", "Program Admin", "Program Lead", "Candidate"],
+    isReady: true,
   },
   {
     label: "Reports",
@@ -125,7 +148,26 @@ function AppShellContent({
   title,
 }: AppShellProps) {
   const pathname = usePathname();
-  const { logout, user } = useAuth();
+  const { accessToken, logout, user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!accessToken) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const loadUnreadCount = async () => {
+      try {
+        const data = await getUnreadNotificationCount(accessToken);
+        setUnreadCount(data.count);
+      } catch {
+        setUnreadCount(0);
+      }
+    };
+
+    void loadUnreadCount();
+  }, [accessToken, pathname]);
 
   if (!user) {
     return null;
@@ -178,9 +220,18 @@ function AppShellContent({
             <button className="icon-button" type="button" title="Search">
               <Search size={18} aria-hidden="true" />
             </button>
-            <button className="icon-button" type="button" title="Notifications">
+            <Link
+              className="icon-button notification-button"
+              href="/notifications"
+              title="Notifications"
+            >
               <Bell size={18} aria-hidden="true" />
-            </button>
+              {unreadCount > 0 && (
+                <span className="notification-badge" aria-label={`${unreadCount} unread`}>
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </Link>
             {primaryAction}
             <button
               className="icon-button"
