@@ -76,7 +76,10 @@ export const uploadFile = asyncHandler(async (request, response) => {
 
 export const downloadFile = asyncHandler(async (request, response) => {
   const input = downloadFileSchema.parse({ query: request.query });
-  const { file, buffer } = await filesService.downloadByToken(input.query.token);
+  const { file, buffer } = await filesService.downloadByToken(
+    input.query.token,
+    getContext(request),
+  );
 
   response.setHeader("Content-Type", file.mimeType);
   response.setHeader(

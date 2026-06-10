@@ -91,6 +91,20 @@ const deliverCallInvite = async (call: CallRecord) => {
   });
 };
 
+const ensureValidCallSchedule = (scheduledStartAt: Date, scheduledEndAt: Date) => {
+  if (
+    Number.isNaN(scheduledStartAt.getTime()) ||
+    Number.isNaN(scheduledEndAt.getTime()) ||
+    scheduledEndAt <= scheduledStartAt
+  ) {
+    throw new HttpError(
+      400,
+      "call_invalid_schedule",
+      "Call end time must be after start time.",
+    );
+  }
+};
+
 export class CallsService {
   constructor(private readonly repository = new CallsRepository()) {}
 
@@ -146,13 +160,7 @@ export class CallsService {
     const scheduledStartAt = new Date(input.scheduledStartAt);
     const scheduledEndAt = new Date(input.scheduledEndAt);
 
-    if (scheduledEndAt <= scheduledStartAt) {
-      throw new HttpError(
-        400,
-        "call_invalid_schedule",
-        "Call end time must be after start time.",
-      );
-    }
+    ensureValidCallSchedule(scheduledStartAt, scheduledEndAt);
 
     const call = await this.repository.create({
       candidateId: input.candidateId,
@@ -211,18 +219,29 @@ export class CallsService {
     }
 
     const existingCall = await this.repository.findById(id);
+    if (!existingCall) {
+      throw new HttpError(404, "call_not_found", "Call not found.");
+    }
+
+    const scheduledStartAt = input.scheduledStartAt
+      ? new Date(input.scheduledStartAt)
+      : existingCall.scheduledStartAt;
+    const scheduledEndAt = input.scheduledEndAt
+      ? new Date(input.scheduledEndAt)
+      : existingCall.scheduledEndAt;
+
+    ensureValidCallSchedule(scheduledStartAt, scheduledEndAt);
+
     const updatedCall = await this.repository.update(id, {
       title: input.title,
       description: input.description,
-      scheduledStartAt: input.scheduledStartAt
-        ? new Date(input.scheduledStartAt)
-        : undefined,
-      scheduledEndAt: input.scheduledEndAt ? new Date(input.scheduledEndAt) : undefined,
+      scheduledStartAt: input.scheduledStartAt ? scheduledStartAt : undefined,
+      scheduledEndAt: input.scheduledEndAt ? scheduledEndAt : undefined,
       meetingLink: input.meetingLink,
       actorId: context.actorId,
     });
 
-    if (!existingCall || !updatedCall) {
+    if (!updatedCall) {
       throw new HttpError(404, "call_not_found", "Call not found.");
     }
 
@@ -243,6 +262,14 @@ export class CallsService {
   }
 
   async cancelCall(id: string, context: ActorContext) {
+    if (!["Super Admin", "Program Admin", "Program Lead"].includes(context.role)) {
+      throw new HttpError(
+        403,
+        "call_canceller_required",
+        "Only admins and leads can cancel calls.",
+      );
+    }
+
     const canAccess = await this.repository.canAccessCall({
       callId: id,
       actorId: context.actorId,

@@ -11,10 +11,9 @@ import {
 
 export const filesRouter = Router();
 
-filesRouter.get("/download", downloadFile);
-
 filesRouter.use(authenticate);
 
+filesRouter.get("/download", downloadFile);
 filesRouter.get("/", listFiles);
 filesRouter.get("/:id", getFile);
 filesRouter.post("/upload", uploadMiddleware, uploadFile);

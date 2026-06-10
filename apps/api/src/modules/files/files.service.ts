@@ -176,7 +176,7 @@ export class FilesService {
     return toFileResponse(file, this.buildSignedDownloadUrl(file.id));
   }
 
-  async downloadByToken(token: string) {
+  async downloadByToken(token: string, context: ActorContext) {
     let fileId: string;
 
     try {
@@ -184,6 +184,16 @@ export class FilesService {
       fileId = payload.fileId;
     } catch {
       throw new HttpError(401, "invalid_download_token", "Download link is invalid or expired.");
+    }
+
+    const canAccess = await this.repository.canAccessFile({
+      fileId,
+      actorId: context.actorId,
+      role: context.role,
+    });
+
+    if (!canAccess) {
+      throw new HttpError(404, "file_not_found", "File not found.");
     }
 
     const file = await this.repository.findById(fileId);
