@@ -11,10 +11,17 @@ import type {
   CandidateLogEntry,
   CandidateOptions,
   Program,
+  KpiFeeRecommendation,
   KpiReview,
   KpiScoreEntry,
+  QuarterlyKpiSummary,
   Notification,
   NotificationPreferences,
+  PhasePromotionChecklistItem,
+  PhasePromotionLeadRecommendation,
+  PhasePromotionProgramAdminDecision,
+  PhasePromotionReview,
+  PhasePromotionSuperAdminDecision,
   StoredFile,
   TaskBrief,
   Timesheet,
@@ -534,7 +541,44 @@ export const createKpiReview = (
   input: {
     candidateId: string;
     reviewPeriod: string;
+    reviewDate: string;
+    currentPhase: string;
+    currentDesignation: string;
+    programStartDate?: string;
+    monthsInCurrentPhase?: number;
+    attendanceSummary: {
+      monthlyTargetHours: number;
+      actualHoursLogged: number;
+      workingDaysAvailable: number | null;
+      daysAbsent: number;
+      publicHolidays: number;
+      nonAvailabilityDays: number;
+      complianceStatus: "full_compliance" | "partial" | "non_compliant";
+    };
     scores: KpiScoreEntry[];
+    summary: {
+      topStrengths: string[];
+      improvementAreas: string[];
+      notableAchievements?: string;
+      qualityIssues?: string;
+      feedbackResponse?: string;
+      conductConcerns?: string;
+    };
+    improvementPlan: {
+      pipConsideration: boolean;
+      nextReviewDate?: string;
+      directives: Array<{
+        criterionKey: string;
+        criterionLabel: string;
+        directive: string;
+        measurementDeadline: string;
+      }>;
+    };
+    promotionSignal: {
+      promotionWatch: boolean;
+      readyForPromotion: boolean;
+    };
+    feeRecommendation?: KpiFeeRecommendation;
     feedback?: string;
   },
 ) =>
@@ -550,7 +594,44 @@ export const updateKpiReview = (
   accessToken: string,
   kpiReviewId: string,
   input: {
+    reviewDate: string;
+    currentPhase: string;
+    currentDesignation: string;
+    programStartDate?: string;
+    monthsInCurrentPhase?: number;
+    attendanceSummary: {
+      monthlyTargetHours: number;
+      actualHoursLogged: number;
+      workingDaysAvailable: number | null;
+      daysAbsent: number;
+      publicHolidays: number;
+      nonAvailabilityDays: number;
+      complianceStatus: "full_compliance" | "partial" | "non_compliant";
+    };
     scores: KpiScoreEntry[];
+    summary: {
+      topStrengths: string[];
+      improvementAreas: string[];
+      notableAchievements?: string;
+      qualityIssues?: string;
+      feedbackResponse?: string;
+      conductConcerns?: string;
+    };
+    improvementPlan: {
+      pipConsideration: boolean;
+      nextReviewDate?: string;
+      directives: Array<{
+        criterionKey: string;
+        criterionLabel: string;
+        directive: string;
+        measurementDeadline: string;
+      }>;
+    };
+    promotionSignal: {
+      promotionWatch: boolean;
+      readyForPromotion: boolean;
+    };
+    feeRecommendation?: KpiFeeRecommendation;
     feedback?: string;
   },
 ) =>
@@ -564,6 +645,305 @@ export const updateKpiReview = (
 
 export const completeKpiReview = (accessToken: string, kpiReviewId: string) =>
   request<KpiReview>(`/api/v1/kpi-reviews/${kpiReviewId}/complete`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const listQuarterlyKpiSummaries = (
+  accessToken: string,
+  filters: {
+    programId?: string;
+    batchId?: string;
+    candidateId?: string;
+    status?: string;
+    reviewYear?: string;
+    reviewQuarter?: string;
+  } = {},
+) =>
+  request<QuarterlyKpiSummary[]>(
+    `/api/v1/kpi-reviews/quarterly-summaries${toQueryString({
+      includeArchived: "true",
+      programId: filters.programId,
+      batchId: filters.batchId,
+      candidateId: filters.candidateId,
+      status: filters.status,
+      reviewYear: filters.reviewYear,
+      reviewQuarter: filters.reviewQuarter,
+    })}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+export const createQuarterlyKpiSummary = (
+  accessToken: string,
+  input: {
+    candidateId: string;
+    reviewYear: number;
+    reviewQuarter: number;
+    reviewDate: string;
+    currentPhase: string;
+    currentDesignation: string;
+    assessment: {
+      technicalGrowthSummary?: string;
+      deliveryConsistencySummary?: string;
+      communicationCollaborationSummary?: string;
+      ownershipIndependenceSummary?: string;
+      reviewResponsivenessSummary?: string;
+      riskFlags?: string;
+      strengths: string[];
+      improvementPriorities: string[];
+      recommendedFocus?: string;
+    };
+    actionPlan: {
+      nextQuarterGoals?: string;
+      expectedSkillImprovements?: string;
+      expectedDeliveryImprovements?: string;
+      supportRequired?: string;
+      followUpDate?: string;
+    };
+    outcome?:
+      | "on_track"
+      | "on_track_with_support"
+      | "needs_improvement_plan"
+      | "promotion_track_candidate"
+      | "not_ready_for_promotion_track";
+    feedback?: string;
+  },
+) =>
+  request<QuarterlyKpiSummary>("/api/v1/kpi-reviews/quarterly-summaries", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const updateQuarterlyKpiSummary = (
+  accessToken: string,
+  quarterlySummaryId: string,
+  input: {
+    reviewDate: string;
+    currentPhase: string;
+    currentDesignation: string;
+    assessment: {
+      technicalGrowthSummary?: string;
+      deliveryConsistencySummary?: string;
+      communicationCollaborationSummary?: string;
+      ownershipIndependenceSummary?: string;
+      reviewResponsivenessSummary?: string;
+      riskFlags?: string;
+      strengths: string[];
+      improvementPriorities: string[];
+      recommendedFocus?: string;
+    };
+    actionPlan: {
+      nextQuarterGoals?: string;
+      expectedSkillImprovements?: string;
+      expectedDeliveryImprovements?: string;
+      supportRequired?: string;
+      followUpDate?: string;
+    };
+    outcome?:
+      | "on_track"
+      | "on_track_with_support"
+      | "needs_improvement_plan"
+      | "promotion_track_candidate"
+      | "not_ready_for_promotion_track";
+    feedback?: string;
+  },
+) =>
+  request<QuarterlyKpiSummary>(
+    `/api/v1/kpi-reviews/quarterly-summaries/${quarterlySummaryId}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(input),
+    },
+  );
+
+export const completeQuarterlyKpiSummary = (
+  accessToken: string,
+  quarterlySummaryId: string,
+) =>
+  request<QuarterlyKpiSummary>(
+    `/api/v1/kpi-reviews/quarterly-summaries/${quarterlySummaryId}/complete`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+export const listPhasePromotionReviews = (
+  accessToken: string,
+  filters: {
+    programId?: string;
+    batchId?: string;
+    candidateId?: string;
+    status?: string;
+    caseType?: string;
+  } = {},
+) =>
+  request<PhasePromotionReview[]>(
+    `/api/v1/kpi-reviews/phase-promotions${toQueryString({
+      includeArchived: "true",
+      programId: filters.programId,
+      batchId: filters.batchId,
+      candidateId: filters.candidateId,
+      status: filters.status,
+      caseType: filters.caseType,
+    })}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+export const createPhasePromotionReview = (
+  accessToken: string,
+  input: {
+    candidateId: string;
+    preparedDate: string;
+    currentPhase: string;
+    currentDesignation: string;
+    proposedNextPhase: string;
+    proposedNextDesignation: string;
+    currentMonthlyFee?: number;
+    proposedMonthlyFee?: number;
+    currentPhaseStartDate?: string;
+    monthsInCurrentPhase?: number;
+    promotionEffectiveDate: string;
+    promotionCycleType: string;
+    caseType: "normal_eligibility" | "exception_case";
+    exceptionReason?: string;
+    evidence: {
+      qualityReworkSummary?: string;
+      leadReviewSummary?: string;
+      keyProjectsCompleted: string[];
+      skillsDemonstrated: string[];
+      independentDeliveryEvidence?: string;
+      mentoringLeadershipSignals?: string;
+      repositoryLinks: string[];
+      supportingFileIds: string[];
+    };
+    eligibilityChecklist: PhasePromotionChecklistItem[];
+    leadRecommendation: {
+      recommendation: PhasePromotionLeadRecommendation["recommendation"];
+      summary?: string | null;
+      conditions?: string | null;
+      initialAssignmentNextPhase?: string | null;
+    };
+  },
+) =>
+  request<PhasePromotionReview>("/api/v1/kpi-reviews/phase-promotions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const updatePhasePromotionReview = (
+  accessToken: string,
+  reviewId: string,
+  input: {
+    preparedDate: string;
+    currentPhase: string;
+    currentDesignation: string;
+    proposedNextPhase: string;
+    proposedNextDesignation: string;
+    currentMonthlyFee?: number;
+    proposedMonthlyFee?: number;
+    currentPhaseStartDate?: string;
+    monthsInCurrentPhase?: number;
+    promotionEffectiveDate: string;
+    promotionCycleType: string;
+    caseType: "normal_eligibility" | "exception_case";
+    exceptionReason?: string;
+    evidence: {
+      qualityReworkSummary?: string;
+      leadReviewSummary?: string;
+      keyProjectsCompleted: string[];
+      skillsDemonstrated: string[];
+      independentDeliveryEvidence?: string;
+      mentoringLeadershipSignals?: string;
+      repositoryLinks: string[];
+      supportingFileIds: string[];
+    };
+    eligibilityChecklist: PhasePromotionChecklistItem[];
+    leadRecommendation: {
+      recommendation: PhasePromotionLeadRecommendation["recommendation"];
+      summary?: string | null;
+      conditions?: string | null;
+      initialAssignmentNextPhase?: string | null;
+    };
+  },
+) =>
+  request<PhasePromotionReview>(`/api/v1/kpi-reviews/phase-promotions/${reviewId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+export const submitPhasePromotionReview = (accessToken: string, reviewId: string) =>
+  request<PhasePromotionReview>(`/api/v1/kpi-reviews/phase-promotions/${reviewId}/submit`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+export const reviewPhasePromotionByProgramAdmin = (
+  accessToken: string,
+  reviewId: string,
+  input: {
+    decision: PhasePromotionProgramAdminDecision;
+    note: string;
+  },
+) =>
+  request<PhasePromotionReview>(
+    `/api/v1/kpi-reviews/phase-promotions/${reviewId}/program-admin-review`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(input),
+    },
+  );
+
+export const decidePhasePromotionBySuperAdmin = (
+  accessToken: string,
+  reviewId: string,
+  input: {
+    decision: PhasePromotionSuperAdminDecision;
+    note: string;
+  },
+) =>
+  request<PhasePromotionReview>(
+    `/api/v1/kpi-reviews/phase-promotions/${reviewId}/super-admin-decision`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(input),
+    },
+  );
+
+export const acknowledgePhasePromotionReview = (accessToken: string, reviewId: string) =>
+  request<PhasePromotionReview>(`/api/v1/kpi-reviews/phase-promotions/${reviewId}/acknowledge`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,

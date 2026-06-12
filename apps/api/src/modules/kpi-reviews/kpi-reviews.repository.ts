@@ -17,10 +17,57 @@ import { alias } from "drizzle-orm/pg-core";
 const reviewerUsers = alias(users, "reviewer_users");
 
 export type KpiScoreEntryRecord = {
+  key: string;
   criterion: string;
   score: number;
   maxScore: number;
   notes?: string;
+};
+
+export type KpiAttendanceSummaryRecord = {
+  monthlyTargetHours: number;
+  actualHoursLogged: number;
+  workingDaysAvailable: number | null;
+  daysAbsent: number;
+  publicHolidays: number;
+  nonAvailabilityDays: number;
+  complianceStatus: "full_compliance" | "partial" | "non_compliant";
+  varianceHours: number;
+};
+
+export type KpiReviewSummaryRecord = {
+  overallRating: "excellent" | "good" | "satisfactory" | "below_standard";
+  topStrengths: string[];
+  improvementAreas: string[];
+  notableAchievements: string | null;
+  qualityIssues: string | null;
+  feedbackResponse: string | null;
+  conductConcerns: string | null;
+};
+
+export type KpiImprovementDirectiveRecord = {
+  criterionKey: string;
+  criterionLabel: string;
+  directive: string;
+  measurementDeadline: string;
+};
+
+export type KpiImprovementPlanRecord = {
+  improvementRequired: boolean;
+  directives: KpiImprovementDirectiveRecord[];
+  pipConsideration: boolean;
+  nextReviewDate: string | null;
+};
+
+export type KpiPromotionSignalRecord = {
+  promotionWatch: boolean;
+  readyForPromotion: boolean;
+};
+
+export type KpiFeeRecommendationRecord = {
+  decision: "maintain" | "increment" | "hold";
+  incrementAmount: number | null;
+  justification: string | null;
 };
 
 export type KpiReviewRecord = {
@@ -37,8 +84,18 @@ export type KpiReviewRecord = {
   reviewerId: string;
   reviewerName: string;
   reviewPeriod: string;
+  reviewDate: string | null;
+  currentPhase: string | null;
+  currentDesignation: string | null;
+  programStartDate: string | null;
+  monthsInCurrentPhase: number | null;
+  attendanceSummary: KpiAttendanceSummaryRecord;
   scores: KpiScoreEntryRecord[];
   overallScore: number | null;
+  summary: KpiReviewSummaryRecord;
+  improvementPlan: KpiImprovementPlanRecord;
+  promotionSignal: KpiPromotionSignalRecord;
+  feeRecommendation: KpiFeeRecommendationRecord | null;
   feedback: string | null;
   status: WorkflowStatus;
   completedAt: Date | null;
@@ -65,8 +122,18 @@ const kpiReviewSelect = {
   reviewerId: kpiReviews.reviewerId,
   reviewerName: reviewerUsers.fullName,
   reviewPeriod: kpiReviews.reviewPeriod,
+  reviewDate: kpiReviews.reviewDate,
+  currentPhase: kpiReviews.currentPhase,
+  currentDesignation: kpiReviews.currentDesignation,
+  programStartDate: kpiReviews.programStartDate,
+  monthsInCurrentPhase: kpiReviews.monthsInCurrentPhase,
+  attendanceSummary: kpiReviews.attendanceSummary,
   scores: kpiReviews.scores,
   overallScore: kpiReviews.overallScore,
+  summary: kpiReviews.summary,
+  improvementPlan: kpiReviews.improvementPlan,
+  promotionSignal: kpiReviews.promotionSignal,
+  feeRecommendation: kpiReviews.feeRecommendation,
   feedback: kpiReviews.feedback,
   status: kpiReviews.status,
   completedAt: kpiReviews.completedAt,
@@ -193,8 +260,18 @@ export class KpiReviewsRepository {
     candidateId: string;
     reviewerId: string;
     reviewPeriod: string;
+    reviewDate: string;
+    currentPhase: string;
+    currentDesignation: string;
+    programStartDate?: string;
+    monthsInCurrentPhase?: number;
+    attendanceSummary: KpiAttendanceSummaryRecord;
     scores: KpiScoreEntryRecord[];
     overallScore: number;
+    summary: KpiReviewSummaryRecord;
+    improvementPlan: KpiImprovementPlanRecord;
+    promotionSignal: KpiPromotionSignalRecord;
+    feeRecommendation?: KpiFeeRecommendationRecord;
     feedback?: string;
   }) {
     const [kpiReview] = await db
@@ -203,8 +280,18 @@ export class KpiReviewsRepository {
         candidateId: input.candidateId,
         reviewerId: input.reviewerId,
         reviewPeriod: input.reviewPeriod,
+        reviewDate: input.reviewDate,
+        currentPhase: input.currentPhase,
+        currentDesignation: input.currentDesignation,
+        programStartDate: input.programStartDate,
+        monthsInCurrentPhase: input.monthsInCurrentPhase,
+        attendanceSummary: input.attendanceSummary,
         scores: input.scores,
         overallScore: input.overallScore,
+        summary: input.summary,
+        improvementPlan: input.improvementPlan,
+        promotionSignal: input.promotionSignal,
+        feeRecommendation: input.feeRecommendation,
         feedback: input.feedback,
         status: "draft",
         createdBy: input.reviewerId,
@@ -220,6 +307,16 @@ export class KpiReviewsRepository {
     input: {
       scores: KpiScoreEntryRecord[];
       overallScore: number;
+      reviewDate: string;
+      currentPhase: string;
+      currentDesignation: string;
+      programStartDate?: string;
+      monthsInCurrentPhase?: number;
+      attendanceSummary: KpiAttendanceSummaryRecord;
+      summary: KpiReviewSummaryRecord;
+      improvementPlan: KpiImprovementPlanRecord;
+      promotionSignal: KpiPromotionSignalRecord;
+      feeRecommendation?: KpiFeeRecommendationRecord;
       feedback?: string;
       actorId: string;
     },
@@ -227,8 +324,18 @@ export class KpiReviewsRepository {
     const [kpiReview] = await db
       .update(kpiReviews)
       .set({
+        reviewDate: input.reviewDate,
+        currentPhase: input.currentPhase,
+        currentDesignation: input.currentDesignation,
+        programStartDate: input.programStartDate,
+        monthsInCurrentPhase: input.monthsInCurrentPhase,
+        attendanceSummary: input.attendanceSummary,
         scores: input.scores,
         overallScore: input.overallScore,
+        summary: input.summary,
+        improvementPlan: input.improvementPlan,
+        promotionSignal: input.promotionSignal,
+        feeRecommendation: input.feeRecommendation,
         feedback: input.feedback,
         updatedAt: new Date(),
         updatedBy: input.actorId,
@@ -316,7 +423,54 @@ export class KpiReviewsRepository {
 
     return rows.map((row) => ({
       ...row,
+      reviewDate: row.reviewDate ?? null,
+      programStartDate: row.programStartDate ?? null,
+      attendanceSummary:
+        row.attendanceSummary && typeof row.attendanceSummary === "object"
+          ? (row.attendanceSummary as KpiAttendanceSummaryRecord)
+          : {
+              monthlyTargetHours: 160,
+              actualHoursLogged: 0,
+              workingDaysAvailable: null,
+              daysAbsent: 0,
+              publicHolidays: 0,
+              nonAvailabilityDays: 0,
+              complianceStatus: "non_compliant",
+              varianceHours: -160,
+            },
       scores: Array.isArray(row.scores) ? (row.scores as KpiScoreEntryRecord[]) : [],
+      summary:
+        row.summary && typeof row.summary === "object"
+          ? (row.summary as KpiReviewSummaryRecord)
+          : {
+              overallRating: "below_standard",
+              topStrengths: [],
+              improvementAreas: [],
+              notableAchievements: null,
+              qualityIssues: null,
+              feedbackResponse: null,
+              conductConcerns: null,
+            },
+      improvementPlan:
+        row.improvementPlan && typeof row.improvementPlan === "object"
+          ? (row.improvementPlan as KpiImprovementPlanRecord)
+          : {
+              improvementRequired: false,
+              directives: [],
+              pipConsideration: false,
+              nextReviewDate: null,
+            },
+      promotionSignal:
+        row.promotionSignal && typeof row.promotionSignal === "object"
+          ? (row.promotionSignal as KpiPromotionSignalRecord)
+          : {
+              promotionWatch: false,
+              readyForPromotion: false,
+            },
+      feeRecommendation:
+        row.feeRecommendation && typeof row.feeRecommendation === "object"
+          ? (row.feeRecommendation as KpiFeeRecommendationRecord)
+          : null,
     }));
   }
 

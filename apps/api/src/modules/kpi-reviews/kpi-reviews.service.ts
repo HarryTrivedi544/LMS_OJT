@@ -1,14 +1,26 @@
 import type { Role } from "@lms/shared";
 
+import { EvidenceService } from "../evidence/evidence.service.js";
 import { notifyKpiReviewCompleted } from "../../integrations/notifications/workflow-notifications.js";
 import { HttpError } from "../../errors/http-error.js";
 import type {
   CreateKpiReviewInput,
+  KpiAttendanceSummaryInput,
+  KpiFeeRecommendationInput,
+  KpiImprovementPlanInput,
   KpiScoreEntryInput,
   ListKpiReviewsInput,
   UpdateKpiReviewInput,
 } from "./kpi-reviews.schema.js";
-import { KpiReviewsRepository, type KpiReviewRecord } from "./kpi-reviews.repository.js";
+import {
+  KpiReviewsRepository,
+  type KpiAttendanceSummaryRecord,
+  type KpiFeeRecommendationRecord,
+  type KpiImprovementPlanRecord,
+  type KpiPromotionSignalRecord,
+  type KpiReviewRecord,
+  type KpiReviewSummaryRecord,
+} from "./kpi-reviews.repository.js";
 
 type ActorContext = {
   actorId: string;
@@ -17,7 +29,7 @@ type ActorContext = {
   userAgent?: string;
 };
 
-const toKpiReviewResponse = (kpiReview: KpiReviewRecord) => ({
+const toKpiReviewBaseResponse = (kpiReview: KpiReviewRecord) => ({
   id: kpiReview.id,
   candidateId: kpiReview.candidateId,
   userId: kpiReview.userId,
@@ -31,8 +43,18 @@ const toKpiReviewResponse = (kpiReview: KpiReviewRecord) => ({
   reviewerId: kpiReview.reviewerId,
   reviewerName: kpiReview.reviewerName,
   reviewPeriod: kpiReview.reviewPeriod,
+  reviewDate: kpiReview.reviewDate,
+  currentPhase: kpiReview.currentPhase,
+  currentDesignation: kpiReview.currentDesignation,
+  programStartDate: kpiReview.programStartDate,
+  monthsInCurrentPhase: kpiReview.monthsInCurrentPhase,
+  attendanceSummary: kpiReview.attendanceSummary,
   scores: kpiReview.scores,
   overallScore: kpiReview.overallScore,
+  summary: kpiReview.summary,
+  improvementPlan: kpiReview.improvementPlan,
+  promotionSignal: kpiReview.promotionSignal,
+  feeRecommendation: kpiReview.feeRecommendation,
   feedback: kpiReview.feedback,
   status: kpiReview.status,
   completedAt: kpiReview.completedAt?.toISOString() ?? null,
@@ -44,6 +66,24 @@ const toKpiReviewResponse = (kpiReview: KpiReviewRecord) => ({
   updatedAt: kpiReview.updatedAt.toISOString(),
   deletedAt: kpiReview.deletedAt?.toISOString() ?? null,
 });
+
+const buildOverallRating = (
+  overallScore: number,
+): KpiReviewSummaryRecord["overallRating"] => {
+  if (overallScore >= 85) {
+    return "excellent";
+  }
+
+  if (overallScore >= 70) {
+    return "good";
+  }
+
+  if (overallScore >= 60) {
+    return "satisfactory";
+  }
+
+  return "below_standard";
+};
 
 const prepareScores = (scores: KpiScoreEntryInput[]) => {
   const preparedScores = scores.map((entry) => ({
@@ -71,8 +111,124 @@ const prepareScores = (scores: KpiScoreEntryInput[]) => {
   return { preparedScores, overallScore };
 };
 
+const prepareAttendanceSummary = (
+  attendanceSummary: KpiAttendanceSummaryInput,
+): KpiAttendanceSummaryRecord => ({
+  ...attendanceSummary,
+  varianceHours: Number(
+    (attendanceSummary.actualHoursLogged - attendanceSummary.monthlyTargetHours).toFixed(2),
+  ),
+});
+
+const prepareSummary = (
+  input: CreateKpiReviewInput["summary"] | UpdateKpiReviewInput["summary"],
+  overallScore: number,
+): KpiReviewSummaryRecord => ({
+  overallRating: buildOverallRating(overallScore),
+  topStrengths: input.topStrengths,
+  improvementAreas: input.improvementAreas,
+  notableAchievements: input.notableAchievements || null,
+  qualityIssues: input.qualityIssues || null,
+  feedbackResponse: input.feedbackResponse || null,
+  conductConcerns: input.conductConcerns || null,
+});
+
+const prepareImprovementPlan = (
+  input: KpiImprovementPlanInput,
+): KpiImprovementPlanRecord => {
+  const directives = input.directives.map((directive) => ({
+    ...directive,
+  }));
+
+  return {
+    improvementRequired: directives.length > 0,
+    directives,
+    pipConsideration: input.pipConsideration,
+    nextReviewDate: input.nextReviewDate ?? null,
+  };
+};
+
+const preparePromotionSignal = (
+  input: CreateKpiReviewInput["promotionSignal"] | UpdateKpiReviewInput["promotionSignal"],
+): KpiPromotionSignalRecord => ({
+  promotionWatch: input.promotionWatch,
+  readyForPromotion: input.readyForPromotion,
+});
+
+const prepareFeeRecommendation = (
+  input?: KpiFeeRecommendationInput,
+): KpiFeeRecommendationRecord | undefined => {
+  if (!input) {
+    return undefined;
+  }
+
+  return {
+    decision: input.decision,
+    incrementAmount: input.incrementAmount ?? null,
+    justification: input.justification || null,
+  };
+};
+
+const prepareReviewPayload = (
+  input: CreateKpiReviewInput | UpdateKpiReviewInput,
+) => {
+  const { preparedScores, overallScore } = prepareScores(input.scores);
+  const attendanceSummary = prepareAttendanceSummary(input.attendanceSummary);
+  const summary = prepareSummary(input.summary, overallScore);
+  const improvementPlan = prepareImprovementPlan(input.improvementPlan);
+  const promotionSignal = preparePromotionSignal(input.promotionSignal);
+  const feeRecommendation = prepareFeeRecommendation(input.feeRecommendation);
+
+  return {
+    reviewDate: input.reviewDate,
+    currentPhase: input.currentPhase,
+    currentDesignation: input.currentDesignation,
+    programStartDate: input.programStartDate,
+    monthsInCurrentPhase: input.monthsInCurrentPhase,
+    attendanceSummary,
+    preparedScores,
+    overallScore,
+    summary,
+    improvementPlan,
+    promotionSignal,
+    feeRecommendation,
+    feedback: input.feedback,
+  };
+};
+
+const validateReviewCompletion = (review: KpiReviewRecord) => {
+  const lowScoreEntries = review.scores.filter((entry) => entry.score <= 6);
+  const coveredKeys = new Set(
+    review.improvementPlan.directives.map((directive) => directive.criterionKey),
+  );
+  const missingDirective = lowScoreEntries.find((entry) => !coveredKeys.has(entry.key));
+
+  if (missingDirective) {
+    throw new HttpError(
+      400,
+      "kpi_improvement_directive_required",
+      `Add an improvement directive for "${missingDirective.criterion}" before completing the review.`,
+    );
+  }
+};
+
 export class KpiReviewsService {
-  constructor(private readonly repository = new KpiReviewsRepository()) {}
+  constructor(
+    private readonly repository = new KpiReviewsRepository(),
+    private readonly evidenceService = new EvidenceService(),
+  ) {}
+
+  private async toKpiReviewResponse(kpiReview: KpiReviewRecord) {
+    const linkedEvidence = await this.evidenceService.getMonthlyLinkedEvidence({
+      candidateId: kpiReview.candidateId,
+      reviewPeriod: kpiReview.reviewPeriod,
+    });
+
+    return {
+      ...toKpiReviewBaseResponse(kpiReview),
+      linkedEvidence,
+    };
+  }
 
   async listKpiReviews(input: ListKpiReviewsInput, context: ActorContext) {
     const kpiReviews = await this.repository.list({
@@ -81,7 +237,7 @@ export class KpiReviewsService {
       role: context.role,
     });
 
-    return kpiReviews.map(toKpiReviewResponse);
+    return Promise.all(kpiReviews.map((review) => this.toKpiReviewResponse(review)));
   }
 
   async getKpiReview(id: string, context: ActorContext) {
@@ -101,7 +257,7 @@ export class KpiReviewsService {
       throw new HttpError(404, "kpi_review_not_found", "KPI review not found.");
     }
 
-    return toKpiReviewResponse(kpiReview);
+    return this.toKpiReviewResponse(kpiReview);
   }
 
   async createKpiReview(input: CreateKpiReviewInput, context: ActorContext) {
@@ -136,14 +292,24 @@ export class KpiReviewsService {
       );
     }
 
-    const { preparedScores, overallScore } = prepareScores(input.scores);
+    const payload = prepareReviewPayload(input);
     const kpiReview = await this.repository.create({
       candidateId: input.candidateId,
       reviewerId: context.actorId,
       reviewPeriod: input.reviewPeriod,
-      scores: preparedScores,
-      overallScore,
-      feedback: input.feedback,
+      reviewDate: payload.reviewDate,
+      currentPhase: payload.currentPhase,
+      currentDesignation: payload.currentDesignation,
+      programStartDate: payload.programStartDate,
+      monthsInCurrentPhase: payload.monthsInCurrentPhase,
+      attendanceSummary: payload.attendanceSummary,
+      scores: payload.preparedScores,
+      overallScore: payload.overallScore,
+      summary: payload.summary,
+      improvementPlan: payload.improvementPlan,
+      promotionSignal: payload.promotionSignal,
+      feeRecommendation: payload.feeRecommendation,
+      feedback: payload.feedback,
     });
 
     if (!kpiReview) {
@@ -156,12 +322,12 @@ export class KpiReviewsService {
       action: "kpi.review.created",
       entityType: "kpi_review",
       entityId: kpiReview.id,
-      newValue: toKpiReviewResponse(kpiReview),
+      newValue: await this.toKpiReviewResponse(kpiReview),
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
     });
 
-    return toKpiReviewResponse(kpiReview);
+    return this.toKpiReviewResponse(kpiReview);
   }
 
   async updateKpiReview(id: string, input: UpdateKpiReviewInput, context: ActorContext) {
@@ -193,11 +359,21 @@ export class KpiReviewsService {
       );
     }
 
-    const { preparedScores, overallScore } = prepareScores(input.scores);
+    const payload = prepareReviewPayload(input);
     const updatedReview = await this.repository.update(id, {
-      scores: preparedScores,
-      overallScore,
-      feedback: input.feedback,
+      reviewDate: payload.reviewDate,
+      currentPhase: payload.currentPhase,
+      currentDesignation: payload.currentDesignation,
+      programStartDate: payload.programStartDate,
+      monthsInCurrentPhase: payload.monthsInCurrentPhase,
+      attendanceSummary: payload.attendanceSummary,
+      scores: payload.preparedScores,
+      overallScore: payload.overallScore,
+      summary: payload.summary,
+      improvementPlan: payload.improvementPlan,
+      promotionSignal: payload.promotionSignal,
+      feeRecommendation: payload.feeRecommendation,
+      feedback: payload.feedback,
       actorId: context.actorId,
     });
 
@@ -211,13 +387,13 @@ export class KpiReviewsService {
       action: "kpi.review.updated",
       entityType: "kpi_review",
       entityId: id,
-      oldValue: toKpiReviewResponse(existingReview),
-      newValue: toKpiReviewResponse(updatedReview),
+      oldValue: await this.toKpiReviewResponse(existingReview),
+      newValue: await this.toKpiReviewResponse(updatedReview),
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
     });
 
-    return toKpiReviewResponse(updatedReview);
+    return this.toKpiReviewResponse(updatedReview);
   }
 
   async completeKpiReview(id: string, context: ActorContext) {
@@ -249,6 +425,8 @@ export class KpiReviewsService {
       );
     }
 
+    validateReviewCompletion(existingReview);
+
     const completedReview = await this.repository.complete(id, context.actorId);
 
     if (!completedReview) {
@@ -261,18 +439,25 @@ export class KpiReviewsService {
       action: "kpi.review.completed",
       entityType: "kpi_review",
       entityId: id,
-      oldValue: toKpiReviewResponse(existingReview),
-      newValue: toKpiReviewResponse(completedReview),
+      oldValue: await this.toKpiReviewResponse(existingReview),
+      newValue: await this.toKpiReviewResponse(completedReview),
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
     });
+    await this.evidenceService.syncMonthlyEvidenceLinks({
+      kpiReviewId: id,
+      candidateId: completedReview.candidateId,
+      reviewPeriod: completedReview.reviewPeriod,
+      actorId: context.actorId,
+    });
+    const completedResponse = await this.toKpiReviewResponse(completedReview);
     await this.repository.emitDomainEvent({
       eventName: "kpi.review.completed",
       entityType: "kpi_review",
       entityId: id,
       actorType: "user",
       actorId: context.actorId,
-      payload: toKpiReviewResponse(completedReview),
+      payload: completedResponse,
     });
     await notifyKpiReviewCompleted({
       candidateUserId: completedReview.userId,
@@ -280,6 +465,6 @@ export class KpiReviewsService {
       overallScore: completedReview.overallScore,
     });
 
-    return toKpiReviewResponse(completedReview);
+    return completedResponse;
   }
 }

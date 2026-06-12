@@ -33,6 +33,10 @@ export type CandidateRecord = {
   batchName: string | null;
   batchCode: string | null;
   candidateCode: string;
+  currentPhase: string | null;
+  currentDesignation: string | null;
+  currentMonthlyFee: number | null;
+  currentPhaseStartDate: string | null;
   status: UserStatus;
   isActive: boolean;
   createdAt: Date;
@@ -66,6 +70,10 @@ const candidateSelect = {
   batchName: batches.name,
   batchCode: batches.code,
   candidateCode: candidates.candidateCode,
+  currentPhase: candidates.currentPhase,
+  currentDesignation: candidates.currentDesignation,
+  currentMonthlyFee: candidates.currentMonthlyFee,
+  currentPhaseStartDate: candidates.currentPhaseStartDate,
   status: candidates.status,
   isActive: candidates.isActive,
   createdAt: candidates.createdAt,
@@ -290,6 +298,30 @@ export class CandidatesRepository {
     });
 
     return candidateId ? this.findById(candidateId) : null;
+  }
+
+  async applyPromotion(input: {
+    candidateId: string;
+    currentPhase: string;
+    currentDesignation: string;
+    currentMonthlyFee?: number | null;
+    currentPhaseStartDate: string;
+    actorId: string;
+  }) {
+    const [candidate] = await db
+      .update(candidates)
+      .set({
+        currentPhase: input.currentPhase,
+        currentDesignation: input.currentDesignation,
+        currentMonthlyFee: input.currentMonthlyFee ?? null,
+        currentPhaseStartDate: input.currentPhaseStartDate,
+        updatedAt: new Date(),
+        updatedBy: input.actorId,
+      })
+      .where(eq(candidates.id, input.candidateId))
+      .returning(candidateSelect);
+
+    return candidate ?? null;
   }
 
   async archive(id: string, actorId: string) {

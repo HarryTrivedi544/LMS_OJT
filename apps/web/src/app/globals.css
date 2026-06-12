@@ -859,6 +859,84 @@ h2 {
   color: var(--muted);
 }
 
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kpi-form {
+  gap: 16px;
+}
+
+.kpi-form-section {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.kpi-form-section h3,
+.row-title.small {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.kpi-form-grid,
+.kpi-summary-grid,
+.kpi-detail-grid,
+.kpi-toggle-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.kpi-form-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.kpi-summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.kpi-summary-grid.compact,
+.kpi-detail-grid {
+  margin-top: 4px;
+}
+
+.kpi-detail-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.kpi-toggle-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.kpi-form-wide {
+  grid-column: 1 / -1;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  color: var(--text);
+}
+
+.kpi-review-card {
+  gap: 12px;
+}
+
+.kpi-tag-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+}
+
 .checkbox-row {
   display: flex;
   align-items: center;
@@ -1016,6 +1094,11 @@ h2 {
   .assignment-form,
   .stack-form .review-controls {
     grid-template-columns: 1fr;
+  }
+
+  .section-header-row {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .program-row {

@@ -86,6 +86,10 @@ export const candidateSchema = z.object({
   batchName: z.string().nullable(),
   batchCode: z.string().nullable(),
   candidateCode: z.string(),
+  currentPhase: z.string().nullable(),
+  currentDesignation: z.string().nullable(),
+  currentMonthlyFee: z.number().nullable(),
+  currentPhaseStartDate: z.string().nullable(),
   status: z.enum(["active", "inactive", "suspended", "archived"]),
   isActive: z.boolean(),
   createdAt: z.string(),
@@ -249,11 +253,160 @@ export const storedFileSchema = z.object({
 });
 
 export const kpiScoreEntrySchema = z.object({
+  key: z.string(),
   criterion: z.string(),
   score: z.number(),
   maxScore: z.number(),
   notes: z.string().optional(),
 });
+
+export const kpiAttendanceSummarySchema = z.object({
+  monthlyTargetHours: z.number(),
+  actualHoursLogged: z.number(),
+  workingDaysAvailable: z.number().nullable(),
+  daysAbsent: z.number(),
+  publicHolidays: z.number(),
+  nonAvailabilityDays: z.number(),
+  complianceStatus: z.enum([
+    "full_compliance",
+    "partial",
+    "non_compliant",
+  ]),
+  varianceHours: z.number(),
+});
+
+export const kpiReviewSummarySchema = z.object({
+  overallRating: z.enum([
+    "excellent",
+    "good",
+    "satisfactory",
+    "below_standard",
+  ]),
+  topStrengths: z.array(z.string()),
+  improvementAreas: z.array(z.string()),
+  notableAchievements: z.string().nullable(),
+  qualityIssues: z.string().nullable(),
+  feedbackResponse: z.string().nullable(),
+  conductConcerns: z.string().nullable(),
+});
+
+export const kpiImprovementDirectiveSchema = z.object({
+  criterionKey: z.string(),
+  criterionLabel: z.string(),
+  directive: z.string(),
+  measurementDeadline: z.string(),
+});
+
+export const kpiImprovementPlanSchema = z.object({
+  improvementRequired: z.boolean(),
+  directives: z.array(kpiImprovementDirectiveSchema),
+  pipConsideration: z.boolean(),
+  nextReviewDate: z.string().nullable(),
+});
+
+export const kpiPromotionSignalSchema = z.object({
+  promotionWatch: z.boolean(),
+  readyForPromotion: z.boolean(),
+});
+
+export const kpiFeeRecommendationSchema = z.object({
+  decision: z.enum(["maintain", "increment", "hold"]),
+  incrementAmount: z.number().nullable(),
+  justification: z.string().nullable(),
+});
+
+export const evidenceLinkRefSchema = z.object({
+  entityType: z.enum([
+    "candidate_log",
+    "timesheet",
+    "task_brief",
+    "file",
+    "call",
+    "kpi_review",
+    "quarterly_kpi_summary",
+  ]),
+  entityId: z.string(),
+  label: z.string(),
+  status: z.string().nullable(),
+  occurredAt: z.string().nullable(),
+  summary: z.string().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const linkedEvidenceSchema = z.object({
+  dailyLogs: z.array(evidenceLinkRefSchema),
+  timesheets: z.array(evidenceLinkRefSchema),
+  taskBriefs: z.array(evidenceLinkRefSchema),
+  files: z.array(evidenceLinkRefSchema),
+  calls: z.array(evidenceLinkRefSchema),
+  kpiReviews: z.array(evidenceLinkRefSchema),
+  quarterlySummaries: z.array(evidenceLinkRefSchema),
+});
+
+export const quarterlyKpiMonthlyAverageSchema = z.object({
+  reviewPeriod: z.string(),
+  overallScore: z.number(),
+});
+
+export const quarterlyKpiLinkedMonthlyReviewSchema = z.object({
+  id: z.string(),
+  reviewPeriod: z.string(),
+  overallScore: z.number(),
+  status: z.string(),
+});
+
+export const quarterlyKpiWorkflowSummariesSchema = z.object({
+  timesheetSubmissionSummary: z.string().nullable(),
+  dailyLogConsistencySummary: z.string().nullable(),
+  taskCompletionSummary: z.string().nullable(),
+  callEngagementSummary: z.string().nullable(),
+});
+
+export const quarterlyKpiRollupSchema = z.object({
+  monthlyAverageScores: z.array(quarterlyKpiMonthlyAverageSchema),
+  quarterlyAverageScore: z.number().nullable(),
+  totalQuarterlyHours: z.number(),
+  averageMonthlyHours: z.number(),
+  timesheetCount: z.number(),
+  approvedTimesheetCount: z.number(),
+  dailyLogCount: z.number(),
+  approvedDailyLogCount: z.number(),
+  taskAssignedCount: z.number(),
+  taskApprovedCount: z.number(),
+  taskRevisionCount: z.number(),
+  callCount: z.number(),
+  cancelledCallCount: z.number(),
+  linkedMonthlyKpiReviews: z.array(quarterlyKpiLinkedMonthlyReviewSchema),
+  workflowSummaries: quarterlyKpiWorkflowSummariesSchema,
+});
+
+export const quarterlyKpiAssessmentSchema = z.object({
+  technicalGrowthSummary: z.string().nullable(),
+  deliveryConsistencySummary: z.string().nullable(),
+  communicationCollaborationSummary: z.string().nullable(),
+  ownershipIndependenceSummary: z.string().nullable(),
+  reviewResponsivenessSummary: z.string().nullable(),
+  riskFlags: z.string().nullable(),
+  strengths: z.array(z.string()),
+  improvementPriorities: z.array(z.string()),
+  recommendedFocus: z.string().nullable(),
+});
+
+export const quarterlyKpiActionPlanSchema = z.object({
+  nextQuarterGoals: z.string().nullable(),
+  expectedSkillImprovements: z.string().nullable(),
+  expectedDeliveryImprovements: z.string().nullable(),
+  supportRequired: z.string().nullable(),
+  followUpDate: z.string().nullable(),
+});
+
+export const quarterlyKpiOutcomeSchema = z.enum([
+  "on_track",
+  "on_track_with_support",
+  "needs_improvement_plan",
+  "promotion_track_candidate",
+  "not_ready_for_promotion_track",
+]);
 
 export const kpiReviewSchema = z.object({
   id: z.string(),
@@ -269,8 +422,18 @@ export const kpiReviewSchema = z.object({
   reviewerId: z.string(),
   reviewerName: z.string(),
   reviewPeriod: z.string(),
+  reviewDate: z.string().nullable(),
+  currentPhase: z.string().nullable(),
+  currentDesignation: z.string().nullable(),
+  programStartDate: z.string().nullable(),
+  monthsInCurrentPhase: z.number().nullable(),
+  attendanceSummary: kpiAttendanceSummarySchema,
   scores: z.array(kpiScoreEntrySchema),
   overallScore: z.number().nullable(),
+  summary: kpiReviewSummarySchema,
+  improvementPlan: kpiImprovementPlanSchema,
+  promotionSignal: kpiPromotionSignalSchema,
+  feeRecommendation: kpiFeeRecommendationSchema.nullable(),
   feedback: z.string().nullable(),
   status: workflowStatusSchema,
   completedAt: z.string().nullable(),
@@ -281,6 +444,178 @@ export const kpiReviewSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   deletedAt: z.string().nullable(),
+  linkedEvidence: linkedEvidenceSchema,
+});
+
+export const quarterlyKpiSummarySchema = z.object({
+  id: z.string(),
+  candidateId: z.string(),
+  userId: z.string(),
+  fullName: z.string(),
+  email: z.email(),
+  candidateCode: z.string(),
+  programId: z.string(),
+  programName: z.string(),
+  batchId: z.string().nullable(),
+  batchName: z.string().nullable(),
+  reviewerId: z.string(),
+  reviewerName: z.string(),
+  reviewYear: z.number(),
+  reviewQuarter: z.number(),
+  reviewDate: z.string().nullable(),
+  reviewPeriodStart: z.string(),
+  reviewPeriodEnd: z.string(),
+  currentPhase: z.string().nullable(),
+  currentDesignation: z.string().nullable(),
+  rollup: quarterlyKpiRollupSchema,
+  assessment: quarterlyKpiAssessmentSchema,
+  actionPlan: quarterlyKpiActionPlanSchema,
+  outcome: quarterlyKpiOutcomeSchema.nullable(),
+  feedback: z.string().nullable(),
+  status: workflowStatusSchema,
+  completedAt: z.string().nullable(),
+  reviewedAt: z.string().nullable(),
+  reviewedBy: z.string().nullable(),
+  reviewNote: z.string().nullable(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+  linkedEvidence: linkedEvidenceSchema,
+});
+
+export const phasePromotionCaseTypeSchema = z.enum([
+  "normal_eligibility",
+  "exception_case",
+]);
+
+export const phasePromotionChecklistItemSchema = z.object({
+  criterionKey: z.string(),
+  criterionLabel: z.string(),
+  isMet: z.boolean(),
+  evidence: z.string().nullable(),
+});
+
+export const phasePromotionEvidenceMonthlyAverageSchema = z.object({
+  kpiReviewId: z.string().nullable(),
+  reviewPeriod: z.string(),
+  overallScore: z.number(),
+});
+
+export const phasePromotionHoursComplianceTrendSchema = z.object({
+  reviewPeriod: z.string(),
+  monthlyTargetHours: z.number(),
+  actualHoursLogged: z.number(),
+  complianceStatus: z.string(),
+});
+
+export const phasePromotionTaskTrendSchema = z.object({
+  reviewPeriod: z.string(),
+  approvedCount: z.number(),
+  revisionCount: z.number(),
+  totalCount: z.number(),
+});
+
+export const phasePromotionRelatedQuarterlySummarySchema = z.object({
+  id: z.string(),
+  reviewYear: z.number(),
+  reviewQuarter: z.number(),
+  quarterlyAverageScore: z.number().nullable(),
+  status: z.string(),
+});
+
+export const phasePromotionEvidenceSchema = z.object({
+  recentMonthlyKpiAverages: z.array(phasePromotionEvidenceMonthlyAverageSchema),
+  overallRecentAverage: z.number().nullable(),
+  hoursComplianceSummary: z.string().nullable(),
+  hoursComplianceTrend: z.array(phasePromotionHoursComplianceTrendSchema),
+  taskCompletionSummary: z.string().nullable(),
+  taskApprovalTrend: z.array(phasePromotionTaskTrendSchema),
+  relatedQuarterlySummary: phasePromotionRelatedQuarterlySummarySchema.nullable(),
+  qualityReworkSummary: z.string().nullable(),
+  leadReviewSummary: z.string().nullable(),
+  keyProjectsCompleted: z.array(z.string()),
+  skillsDemonstrated: z.array(z.string()),
+  independentDeliveryEvidence: z.string().nullable(),
+  mentoringLeadershipSignals: z.string().nullable(),
+  repositoryLinks: z.array(z.string()),
+  supportingFileIds: z.array(z.string()),
+});
+
+export const phasePromotionLeadRecommendationSchema = z.object({
+  recommendation: z.enum(["promote", "promote_with_conditions", "hold"]),
+  summary: z.string().nullable(),
+  conditions: z.string().nullable(),
+  initialAssignmentNextPhase: z.string().nullable(),
+});
+
+export const phasePromotionProgramAdminDecisionSchema = z.enum([
+  "recommend_approval",
+  "recommend_rejection",
+  "revision_required",
+]);
+
+export const phasePromotionProgramAdminReviewSchema = z.object({
+  decision: phasePromotionProgramAdminDecisionSchema.nullable(),
+  note: z.string().nullable(),
+});
+
+export const phasePromotionSuperAdminDecisionSchema = z.enum([
+  "approved",
+  "rejected",
+  "revision_required",
+]);
+
+export const phasePromotionSuperAdminReviewSchema = z.object({
+  decision: phasePromotionSuperAdminDecisionSchema.nullable(),
+  note: z.string().nullable(),
+});
+
+export const phasePromotionReviewSchema = z.object({
+  id: z.string(),
+  candidateId: z.string(),
+  userId: z.string(),
+  fullName: z.string(),
+  email: z.email(),
+  candidateCode: z.string(),
+  programId: z.string(),
+  programName: z.string(),
+  batchId: z.string().nullable(),
+  batchName: z.string().nullable(),
+  preparedBy: z.string(),
+  preparedByName: z.string(),
+  preparedDate: z.string(),
+  currentPhase: z.string(),
+  currentDesignation: z.string(),
+  proposedNextPhase: z.string(),
+  proposedNextDesignation: z.string(),
+  currentMonthlyFee: z.number().nullable(),
+  proposedMonthlyFee: z.number().nullable(),
+  currentPhaseStartDate: z.string().nullable(),
+  monthsInCurrentPhase: z.number().nullable(),
+  promotionEffectiveDate: z.string(),
+  promotionCycleType: z.string(),
+  caseType: phasePromotionCaseTypeSchema,
+  exceptionReason: z.string().nullable(),
+  evidence: phasePromotionEvidenceSchema,
+  eligibilityChecklist: z.array(phasePromotionChecklistItemSchema),
+  leadRecommendation: phasePromotionLeadRecommendationSchema,
+  programAdminReview: phasePromotionProgramAdminReviewSchema,
+  superAdminDecision: phasePromotionSuperAdminReviewSchema,
+  candidateAcknowledgedAt: z.string().nullable(),
+  candidateAcknowledgedBy: z.string().nullable(),
+  status: workflowStatusSchema,
+  submittedAt: z.string().nullable(),
+  programAdminReviewedAt: z.string().nullable(),
+  programAdminReviewedBy: z.string().nullable(),
+  superAdminReviewedAt: z.string().nullable(),
+  superAdminReviewedBy: z.string().nullable(),
+  reviewNote: z.string().nullable(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+  linkedEvidence: linkedEvidenceSchema,
 });
 
 export const taskBriefSchema = z.object({
@@ -387,6 +722,18 @@ export const listKpiReviewsResponseSchema = apiSuccessSchema(
   z.array(kpiReviewSchema),
 );
 export const kpiReviewResponseSchema = apiSuccessSchema(kpiReviewSchema);
+export const listQuarterlyKpiSummariesResponseSchema = apiSuccessSchema(
+  z.array(quarterlyKpiSummarySchema),
+);
+export const quarterlyKpiSummaryResponseSchema = apiSuccessSchema(
+  quarterlyKpiSummarySchema,
+);
+export const listPhasePromotionReviewsResponseSchema = apiSuccessSchema(
+  z.array(phasePromotionReviewSchema),
+);
+export const phasePromotionReviewResponseSchema = apiSuccessSchema(
+  phasePromotionReviewSchema,
+);
 export const listStoredFilesResponseSchema = apiSuccessSchema(
   z.array(storedFileSchema),
 );
@@ -427,7 +774,59 @@ export type Notification = z.infer<typeof notificationSchema>;
 export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
 export type StoredFile = z.infer<typeof storedFileSchema>;
 export type KpiScoreEntry = z.infer<typeof kpiScoreEntrySchema>;
+export type KpiAttendanceSummary = z.infer<typeof kpiAttendanceSummarySchema>;
+export type KpiReviewSummary = z.infer<typeof kpiReviewSummarySchema>;
+export type KpiImprovementDirective = z.infer<
+  typeof kpiImprovementDirectiveSchema
+>;
+export type KpiImprovementPlan = z.infer<typeof kpiImprovementPlanSchema>;
+export type KpiPromotionSignal = z.infer<typeof kpiPromotionSignalSchema>;
+export type KpiFeeRecommendation = z.infer<typeof kpiFeeRecommendationSchema>;
 export type KpiReview = z.infer<typeof kpiReviewSchema>;
+export type EvidenceLinkRef = z.infer<typeof evidenceLinkRefSchema>;
+export type LinkedEvidence = z.infer<typeof linkedEvidenceSchema>;
+export type QuarterlyKpiMonthlyAverage = z.infer<
+  typeof quarterlyKpiMonthlyAverageSchema
+>;
+export type QuarterlyKpiLinkedMonthlyReview = z.infer<
+  typeof quarterlyKpiLinkedMonthlyReviewSchema
+>;
+export type QuarterlyKpiWorkflowSummaries = z.infer<
+  typeof quarterlyKpiWorkflowSummariesSchema
+>;
+export type QuarterlyKpiRollup = z.infer<typeof quarterlyKpiRollupSchema>;
+export type PhasePromotionHoursComplianceTrend = z.infer<
+  typeof phasePromotionHoursComplianceTrendSchema
+>;
+export type PhasePromotionTaskTrend = z.infer<typeof phasePromotionTaskTrendSchema>;
+export type PhasePromotionRelatedQuarterlySummary = z.infer<
+  typeof phasePromotionRelatedQuarterlySummarySchema
+>;
+export type QuarterlyKpiAssessment = z.infer<
+  typeof quarterlyKpiAssessmentSchema
+>;
+export type QuarterlyKpiActionPlan = z.infer<typeof quarterlyKpiActionPlanSchema>;
+export type QuarterlyKpiOutcome = z.infer<typeof quarterlyKpiOutcomeSchema>;
+export type QuarterlyKpiSummary = z.infer<typeof quarterlyKpiSummarySchema>;
+export type PhasePromotionCaseType = z.infer<typeof phasePromotionCaseTypeSchema>;
+export type PhasePromotionChecklistItem = z.infer<typeof phasePromotionChecklistItemSchema>;
+export type PhasePromotionEvidence = z.infer<typeof phasePromotionEvidenceSchema>;
+export type PhasePromotionLeadRecommendation = z.infer<
+  typeof phasePromotionLeadRecommendationSchema
+>;
+export type PhasePromotionProgramAdminDecision = z.infer<
+  typeof phasePromotionProgramAdminDecisionSchema
+>;
+export type PhasePromotionProgramAdminReview = z.infer<
+  typeof phasePromotionProgramAdminReviewSchema
+>;
+export type PhasePromotionSuperAdminDecision = z.infer<
+  typeof phasePromotionSuperAdminDecisionSchema
+>;
+export type PhasePromotionSuperAdminReview = z.infer<
+  typeof phasePromotionSuperAdminReviewSchema
+>;
+export type PhasePromotionReview = z.infer<typeof phasePromotionReviewSchema>;
 export type TaskBrief = z.infer<typeof taskBriefSchema>;
 export type AuthTokens = z.infer<typeof authTokensSchema>;
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
@@ -453,6 +852,18 @@ export type ListTaskBriefsResponse = z.infer<typeof listTaskBriefsResponseSchema
 export type TaskBriefResponse = z.infer<typeof taskBriefResponseSchema>;
 export type ListKpiReviewsResponse = z.infer<typeof listKpiReviewsResponseSchema>;
 export type KpiReviewResponse = z.infer<typeof kpiReviewResponseSchema>;
+export type ListQuarterlyKpiSummariesResponse = z.infer<
+  typeof listQuarterlyKpiSummariesResponseSchema
+>;
+export type QuarterlyKpiSummaryResponse = z.infer<
+  typeof quarterlyKpiSummaryResponseSchema
+>;
+export type ListPhasePromotionReviewsResponse = z.infer<
+  typeof listPhasePromotionReviewsResponseSchema
+>;
+export type PhasePromotionReviewResponse = z.infer<
+  typeof phasePromotionReviewResponseSchema
+>;
 export type ListStoredFilesResponse = z.infer<typeof listStoredFilesResponseSchema>;
 export type StoredFileResponse = z.infer<typeof storedFileResponseSchema>;
 export type ListNotificationsResponse = z.infer<typeof listNotificationsResponseSchema>;

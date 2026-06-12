@@ -60,7 +60,7 @@ function DailyLogsContent() {
   const { accessToken, user } = useAuth();
   const [logs, setLogs] = useState<CandidateLog[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [logDate, setLogDate] = useState(today());
+  const [logDate, setLogDate] = useState("");
   const [entries, setEntries] = useState<EditableLogEntry[]>([createEmptyEntry(0)]);
   const [filters, setFilters] = useState(initialFilters);
   const [reviewInputs, setReviewInputs] = useState<
@@ -115,6 +115,10 @@ function DailyLogsContent() {
       );
     });
   }, [accessToken]);
+
+  useEffect(() => {
+    setLogDate((current) => current || today());
+  }, []);
 
   const updateEntry = (
     index: number,

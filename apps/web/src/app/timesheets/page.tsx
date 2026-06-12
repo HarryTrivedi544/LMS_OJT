@@ -38,6 +38,10 @@ const startOfCurrentWeek = () => {
 };
 
 const addDays = (dateValue: string, days: number) => {
+  if (!dateValue) {
+    return "";
+  }
+
   const date = new Date(`${dateValue}T00:00:00`);
   date.setDate(date.getDate() + days);
 
@@ -75,10 +79,8 @@ function TimesheetsContent() {
     programs: [],
     batches: [],
   });
-  const [weekStartDate, setWeekStartDate] = useState(startOfCurrentWeek());
-  const [entries, setEntries] = useState<EditableTimesheetEntry[]>(
-    createWeekEntries(startOfCurrentWeek()),
-  );
+  const [weekStartDate, setWeekStartDate] = useState("");
+  const [entries, setEntries] = useState<EditableTimesheetEntry[]>(createWeekEntries(""));
   const [filters, setFilters] = useState(initialFilters);
   const [editingTimesheetId, setEditingTimesheetId] = useState<string | null>(null);
   const [reviewInputs, setReviewInputs] = useState<
@@ -149,6 +151,18 @@ function TimesheetsContent() {
       );
     });
   }, [accessToken]);
+
+  useEffect(() => {
+    setWeekStartDate((current) => {
+      if (current) {
+        return current;
+      }
+
+      const nextWeekStart = startOfCurrentWeek();
+      setEntries(createWeekEntries(nextWeekStart));
+      return nextWeekStart;
+    });
+  }, []);
 
   const handleWeekChange = (value: string) => {
     if (editingTimesheetId) {

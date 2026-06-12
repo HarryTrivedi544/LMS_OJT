@@ -71,6 +71,34 @@
       "when": 1781096408606,
       "tag": "0009_dark_jean_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1781250009982,
+      "tag": "0010_clear_speedball",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1781251339613,
+      "tag": "0011_zippy_trish_tilby",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1781252834027,
+      "tag": "0012_free_human_fly",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1781254435222,
+      "tag": "0013_left_payback",
+      "breakpoints": true
     }
   ]
 }

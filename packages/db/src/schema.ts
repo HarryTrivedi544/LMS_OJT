@@ -121,6 +121,10 @@ export const candidates = pgTable(
       .references(() => programs.id),
     batchId: uuid("batch_id").references(() => batches.id),
     candidateCode: text("candidate_code").notNull(),
+    currentPhase: text("current_phase"),
+    currentDesignation: text("current_designation"),
+    currentMonthlyFee: integer("current_monthly_fee"),
+    currentPhaseStartDate: date("current_phase_start_date"),
     status: userStatusEnum("status").notNull().default("active"),
   },
   (table) => [
@@ -198,8 +202,18 @@ export const kpiReviews = pgTable(
       .notNull()
       .references(() => users.id),
     reviewPeriod: text("review_period").notNull(),
+    reviewDate: date("review_date"),
+    currentPhase: text("current_phase"),
+    currentDesignation: text("current_designation"),
+    programStartDate: date("program_start_date"),
+    monthsInCurrentPhase: integer("months_in_current_phase"),
+    attendanceSummary: jsonb("attendance_summary").notNull().default({}),
     scores: jsonb("scores").notNull().default([]),
     overallScore: integer("overall_score"),
+    summary: jsonb("summary").notNull().default({}),
+    improvementPlan: jsonb("improvement_plan").notNull().default({}),
+    promotionSignal: jsonb("promotion_signal").notNull().default({}),
+    feeRecommendation: jsonb("fee_recommendation"),
     feedback: text("feedback"),
     status: workflowStatusEnum("status").notNull().default("draft"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
@@ -216,6 +230,94 @@ export const kpiReviews = pgTable(
     index("kpi_reviews_reviewer_id_idx").on(table.reviewerId),
     index("kpi_reviews_status_idx").on(table.status),
     index("kpi_reviews_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const quarterlyKpiSummaries = pgTable(
+  "quarterly_kpi_summaries",
+  {
+    ...lifecycleColumns,
+    candidateId: uuid("candidate_id")
+      .notNull()
+      .references(() => candidates.id),
+    reviewerId: uuid("reviewer_id")
+      .notNull()
+      .references(() => users.id),
+    reviewYear: integer("review_year").notNull(),
+    reviewQuarter: integer("review_quarter").notNull(),
+    reviewDate: date("review_date"),
+    reviewPeriodStart: date("review_period_start").notNull(),
+    reviewPeriodEnd: date("review_period_end").notNull(),
+    currentPhase: text("current_phase"),
+    currentDesignation: text("current_designation"),
+    rollup: jsonb("rollup").notNull().default({}),
+    assessment: jsonb("assessment").notNull().default({}),
+    actionPlan: jsonb("action_plan").notNull().default({}),
+    outcome: text("outcome"),
+    feedback: text("feedback"),
+    status: workflowStatusEnum("status").notNull().default("draft"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewNote: text("review_note"),
+  },
+  (table) => [
+    uniqueIndex("quarterly_kpi_summaries_candidate_period_unique_idx").on(
+      table.candidateId,
+      table.reviewYear,
+      table.reviewQuarter,
+    ),
+    index("quarterly_kpi_summaries_candidate_id_idx").on(table.candidateId),
+    index("quarterly_kpi_summaries_reviewer_id_idx").on(table.reviewerId),
+    index("quarterly_kpi_summaries_status_idx").on(table.status),
+    index("quarterly_kpi_summaries_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const phasePromotionReviews = pgTable(
+  "phase_promotion_reviews",
+  {
+    ...lifecycleColumns,
+    candidateId: uuid("candidate_id")
+      .notNull()
+      .references(() => candidates.id),
+    preparedBy: uuid("prepared_by")
+      .notNull()
+      .references(() => users.id),
+    preparedDate: date("prepared_date").notNull(),
+    currentPhase: text("current_phase").notNull(),
+    currentDesignation: text("current_designation").notNull(),
+    proposedNextPhase: text("proposed_next_phase").notNull(),
+    proposedNextDesignation: text("proposed_next_designation").notNull(),
+    currentMonthlyFee: integer("current_monthly_fee"),
+    proposedMonthlyFee: integer("proposed_monthly_fee"),
+    currentPhaseStartDate: date("current_phase_start_date"),
+    monthsInCurrentPhase: integer("months_in_current_phase"),
+    promotionEffectiveDate: date("promotion_effective_date").notNull(),
+    promotionCycleType: text("promotion_cycle_type").notNull(),
+    caseType: text("case_type").notNull(),
+    exceptionReason: text("exception_reason"),
+    evidence: jsonb("evidence").notNull().default({}),
+    eligibilityChecklist: jsonb("eligibility_checklist").notNull().default([]),
+    leadRecommendation: jsonb("lead_recommendation").notNull().default({}),
+    programAdminReview: jsonb("program_admin_review").notNull().default({}),
+    superAdminDecision: jsonb("super_admin_decision").notNull().default({}),
+    candidateAcknowledgedAt: timestamp("candidate_acknowledged_at", { withTimezone: true }),
+    candidateAcknowledgedBy: uuid("candidate_acknowledged_by").references(() => users.id),
+    status: workflowStatusEnum("status").notNull().default("draft"),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    programAdminReviewedAt: timestamp("program_admin_reviewed_at", { withTimezone: true }),
+    programAdminReviewedBy: uuid("program_admin_reviewed_by").references(() => users.id),
+    superAdminReviewedAt: timestamp("super_admin_reviewed_at", { withTimezone: true }),
+    superAdminReviewedBy: uuid("super_admin_reviewed_by").references(() => users.id),
+    reviewNote: text("review_note"),
+  },
+  (table) => [
+    index("phase_promotion_reviews_candidate_id_idx").on(table.candidateId),
+    index("phase_promotion_reviews_prepared_by_idx").on(table.preparedBy),
+    index("phase_promotion_reviews_status_idx").on(table.status),
+    index("phase_promotion_reviews_effective_date_idx").on(table.promotionEffectiveDate),
+    index("phase_promotion_reviews_deleted_at_idx").on(table.deletedAt),
   ],
 );
 
@@ -436,6 +538,30 @@ export const evidenceRegistry = pgTable(
     index("evidence_registry_candidate_id_idx").on(table.candidateId),
     index("evidence_registry_entity_idx").on(table.entityType, table.entityId),
     index("evidence_registry_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const evidenceLinks = pgTable(
+  "evidence_links",
+  {
+    ...lifecycleColumns,
+    parentEntityType: text("parent_entity_type").notNull(),
+    parentEntityId: uuid("parent_entity_id").notNull(),
+    childEntityType: text("child_entity_type").notNull(),
+    childEntityId: uuid("child_entity_id").notNull(),
+    linkSource: text("link_source").notNull().default("auto_derived"),
+    metadata: jsonb("metadata").notNull().default({}),
+  },
+  (table) => [
+    index("evidence_links_parent_idx").on(table.parentEntityType, table.parentEntityId),
+    index("evidence_links_child_idx").on(table.childEntityType, table.childEntityId),
+    uniqueIndex("evidence_links_parent_child_unique_idx").on(
+      table.parentEntityType,
+      table.parentEntityId,
+      table.childEntityType,
+      table.childEntityId,
+    ),
+    index("evidence_links_deleted_at_idx").on(table.deletedAt),
   ],
 );
 
