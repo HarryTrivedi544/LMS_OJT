@@ -345,7 +345,7 @@ function TimesheetsContent() {
                   </thead>
                   <tbody>
                     {entries.map((entry, index) => (
-                      <tr key={entry.workDate}>
+                      <tr key={`${entry.workDate || "draft-entry"}-${index}`}>
                         <td>{entry.dayLabel}</td>
                         <td>{entry.workDate}</td>
                         <td>

@@ -4,6 +4,12 @@ import {
   EvidenceService,
   getPromotionEvidencePeriod,
 } from "../evidence/evidence.service.js";
+import {
+  notifyPhasePromotionAcknowledged,
+  notifyPhasePromotionFinalDecision,
+  notifyPhasePromotionProgramAdminReviewed,
+  notifyPhasePromotionSubmitted,
+} from "../../integrations/notifications/workflow-notifications.js";
 import { HttpError } from "../../errors/http-error.js";
 import type {
   CreatePhasePromotionReviewInput,
@@ -422,6 +428,13 @@ export class PhasePromotionReviewsService {
       actorId: context.actorId,
       payload: submittedResponse,
     });
+    await notifyPhasePromotionSubmitted({
+      candidateId: submittedReview.candidateId,
+      fullName: submittedReview.fullName,
+      proposedNextPhase: submittedReview.proposedNextPhase,
+      preparedByName: submittedReview.preparedByName,
+      submittedByUserId: context.actorId,
+    });
 
     return submittedResponse;
   }
@@ -495,6 +508,15 @@ export class PhasePromotionReviewsService {
       actorType: "user",
       actorId: context.actorId,
       payload: reviewedResponse,
+    });
+    await notifyPhasePromotionProgramAdminReviewed({
+      candidateId: reviewed.candidateId,
+      fullName: reviewed.fullName,
+      decision: input.decision,
+      note: input.note,
+      proposedNextPhase: reviewed.proposedNextPhase,
+      preparedByUserId: reviewed.preparedBy,
+      reviewedByUserId: context.actorId,
     });
 
     return reviewedResponse;
@@ -581,6 +603,15 @@ export class PhasePromotionReviewsService {
       actorId: context.actorId,
       payload: decidedResponse,
     });
+    await notifyPhasePromotionFinalDecision({
+      candidateUserId: decided.userId,
+      fullName: decided.fullName,
+      decision: input.decision,
+      proposedNextPhase: decided.proposedNextPhase,
+      note: input.note,
+      preparedByUserId: decided.preparedBy,
+      decidedByUserId: context.actorId,
+    });
 
     return decidedResponse;
   }
@@ -642,6 +673,16 @@ export class PhasePromotionReviewsService {
       newValue: await this.toPhasePromotionReviewResponse(acknowledged),
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
+    });
+    await notifyPhasePromotionAcknowledged({
+      fullName: acknowledged.fullName,
+      acknowledgedAt: acknowledged.candidateAcknowledgedAt?.toISOString() ?? new Date().toISOString(),
+      stakeholderUserIds: [
+        acknowledged.preparedBy,
+        acknowledged.programAdminReviewedBy,
+        acknowledged.superAdminReviewedBy,
+      ].filter((value): value is string => Boolean(value)),
+      acknowledgedByUserId: context.actorId,
     });
 
     return this.toPhasePromotionReviewResponse(acknowledged);

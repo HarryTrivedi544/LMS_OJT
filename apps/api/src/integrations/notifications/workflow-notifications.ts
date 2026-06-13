@@ -3,7 +3,9 @@ import {
 } from "./notification-dispatcher.js";
 import {
   getCandidateUserId,
+  getProgramAdminUserIdsForCandidate,
   getReviewerUserIdsForCandidate,
+  getSuperAdminUserIds,
 } from "./notification-recipients.js";
 
 export const notifyTimesheetSubmitted = async (input: {
@@ -153,4 +155,141 @@ export const notifyKpiReviewCompleted = async (input: {
       metadata: input,
     },
   ]);
+};
+
+export const notifyQuarterlyKpiSummaryCompleted = async (input: {
+  candidateUserId: string;
+  reviewYear: number;
+  reviewQuarter: number;
+  quarterlyAverageScore: number | null;
+}) => {
+  await dispatchWorkflowNotifications([
+    {
+      userId: input.candidateUserId,
+      triggerName: "quarterly.kpi.completed",
+      title: "Quarterly KPI summary completed",
+      body:
+        input.quarterlyAverageScore !== null
+          ? `Your quarterly KPI summary for Q${input.reviewQuarter} ${input.reviewYear} is available. Quarterly average: ${input.quarterlyAverageScore}%.`
+          : `Your quarterly KPI summary for Q${input.reviewQuarter} ${input.reviewYear} is available.`,
+      metadata: input,
+    },
+  ]);
+};
+
+export const notifyPhasePromotionSubmitted = async (input: {
+  candidateId: string;
+  fullName: string;
+  proposedNextPhase: string;
+  preparedByName: string;
+  submittedByUserId?: string;
+}) => {
+  const programAdminIds = await getProgramAdminUserIdsForCandidate(input.candidateId);
+  const recipientIds = programAdminIds.filter((userId) => userId !== input.submittedByUserId);
+
+  await dispatchWorkflowNotifications(
+    recipientIds.map((userId) => ({
+      userId,
+      triggerName: "phase.promotion.submitted",
+      title: "Phase promotion review submitted",
+      body: `${input.preparedByName} submitted a phase promotion review for ${input.fullName} to move to ${input.proposedNextPhase}.`,
+      metadata: input,
+    })),
+  );
+};
+
+export const notifyPhasePromotionProgramAdminReviewed = async (input: {
+  candidateId: string;
+  fullName: string;
+  decision: "recommend_approval" | "recommend_rejection" | "revision_required";
+  note: string;
+  proposedNextPhase: string;
+  preparedByUserId: string;
+  reviewedByUserId?: string;
+}) => {
+  if (input.decision === "revision_required") {
+    await dispatchWorkflowNotifications([
+      {
+        userId: input.preparedByUserId,
+        triggerName: "phase.promotion.revision_required",
+        title: "Phase promotion review needs revision",
+        body: `The phase promotion review for ${input.fullName} needs revision${input.note ? `: ${input.note}` : "."}`,
+        metadata: input,
+      },
+    ]);
+    return;
+  }
+
+  const superAdminIds = await getSuperAdminUserIds();
+  const recipientIds = superAdminIds.filter((userId) => userId !== input.reviewedByUserId);
+  const readableDecision =
+    input.decision === "recommend_approval" ? "recommended for approval" : "recommended for rejection";
+
+  await dispatchWorkflowNotifications(
+    recipientIds.map((userId) => ({
+      userId,
+      triggerName: "phase.promotion.program_admin_reviewed",
+      title: "Phase promotion review ready for final decision",
+      body: `${input.fullName} has been ${readableDecision} for ${input.proposedNextPhase}${input.note ? `: ${input.note}` : "."}`,
+      metadata: input,
+    })),
+  );
+};
+
+export const notifyPhasePromotionFinalDecision = async (input: {
+  candidateUserId: string;
+  fullName: string;
+  decision: "approved" | "rejected" | "revision_required";
+  proposedNextPhase: string;
+  note: string;
+  preparedByUserId: string;
+  decidedByUserId?: string;
+}) => {
+  const notifications = [
+    {
+      userId: input.candidateUserId,
+      triggerName: `phase.promotion.${input.decision}`,
+      title: `Phase promotion ${input.decision.replaceAll("_", " ")}`,
+      body:
+        input.decision === "approved"
+          ? `Your phase promotion decision is approved for ${input.proposedNextPhase}.${input.note ? ` ${input.note}` : ""}`
+          : input.decision === "rejected"
+            ? `Your phase promotion request was rejected.${input.note ? ` ${input.note}` : ""}`
+            : `Your phase promotion review needs revision.${input.note ? ` ${input.note}` : ""}`,
+      metadata: input,
+    },
+  ];
+
+  if (input.preparedByUserId !== input.candidateUserId && input.preparedByUserId !== input.decidedByUserId) {
+    notifications.push({
+      userId: input.preparedByUserId,
+      triggerName: `phase.promotion.${input.decision}`,
+      title: `Phase promotion ${input.decision.replaceAll("_", " ")}`,
+      body: `Final decision recorded for ${input.fullName}: ${input.decision.replaceAll("_", " ")}.${input.note ? ` ${input.note}` : ""}`,
+      metadata: input,
+    });
+  }
+
+  await dispatchWorkflowNotifications(notifications);
+};
+
+export const notifyPhasePromotionAcknowledged = async (input: {
+  fullName: string;
+  acknowledgedAt: string;
+  stakeholderUserIds: string[];
+  acknowledgedByUserId?: string;
+}) => {
+  const recipientIds = [...new Set(input.stakeholderUserIds)].filter(
+    (userId) => userId && userId !== input.acknowledgedByUserId,
+  );
+
+  await dispatchWorkflowNotifications(
+    recipientIds.map((userId) => ({
+      userId,
+      triggerName: "phase.promotion.acknowledged",
+      title: "Phase promotion decision acknowledged",
+      body: `${input.fullName} acknowledged the final phase promotion decision on ${input.acknowledgedAt}.`,
+      metadata: input,
+    })),
+  );
 };

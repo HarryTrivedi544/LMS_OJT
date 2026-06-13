@@ -618,6 +618,162 @@ export const phasePromotionReviewSchema = z.object({
   linkedEvidence: linkedEvidenceSchema,
 });
 
+export const reportsFilterSchema = z.object({
+  programId: z.string().nullable(),
+  batchId: z.string().nullable(),
+  candidateId: z.string().nullable(),
+});
+
+export const reportsOverviewSummarySchema = z.object({
+  candidateCount: z.number(),
+  activeCandidateCount: z.number(),
+  completedMonthlyKpiCount: z.number(),
+  completedQuarterlySummaryCount: z.number(),
+  activePromotionReviewCount: z.number(),
+  approvedPromotionCount: z.number(),
+  overallAverageMonthlyKpiScore: z.number().nullable(),
+  overallAverageQuarterlyKpiScore: z.number().nullable(),
+});
+
+export const candidateProgressReportRowSchema = z.object({
+  candidateId: z.string(),
+  userId: z.string(),
+  fullName: z.string(),
+  candidateCode: z.string(),
+  programId: z.string(),
+  programName: z.string(),
+  batchId: z.string().nullable(),
+  batchName: z.string().nullable(),
+  currentPhase: z.string().nullable(),
+  currentDesignation: z.string().nullable(),
+  monthlyKpiAverage: z.number().nullable(),
+  latestMonthlyReviewPeriod: z.string().nullable(),
+  latestMonthlyScore: z.number().nullable(),
+  latestQuarterlyLabel: z.string().nullable(),
+  latestQuarterlyAverage: z.number().nullable(),
+  latestQuarterlyOutcome: z.string().nullable(),
+  totalLoggedHours: z.number(),
+  dailyLogCount: z.number(),
+  approvedDailyLogCount: z.number(),
+  timesheetCount: z.number(),
+  approvedTimesheetCount: z.number(),
+  taskAssignedCount: z.number(),
+  taskApprovedCount: z.number(),
+  taskRevisionCount: z.number(),
+  callCount: z.number(),
+  cancelledCallCount: z.number(),
+  activePromotionStatus: z.string().nullable(),
+});
+
+export const scopePerformanceReportRowSchema = z.object({
+  scopeType: z.enum(["program", "batch"]),
+  scopeId: z.string(),
+  scopeName: z.string(),
+  programId: z.string(),
+  programName: z.string(),
+  candidateCount: z.number(),
+  activeCandidateCount: z.number(),
+  averageMonthlyKpiScore: z.number().nullable(),
+  averageQuarterlyKpiScore: z.number().nullable(),
+  dailyLogApprovalRate: z.number().nullable(),
+  timesheetApprovalRate: z.number().nullable(),
+  taskApprovalRate: z.number().nullable(),
+  promotionReadyCount: z.number(),
+  revisionRequiredCount: z.number(),
+});
+
+export const monthlyKpiReportRowSchema = z.object({
+  reviewId: z.string(),
+  candidateId: z.string(),
+  fullName: z.string(),
+  candidateCode: z.string(),
+  programName: z.string(),
+  batchName: z.string().nullable(),
+  reviewPeriod: z.string(),
+  overallScore: z.number().nullable(),
+  status: z.string(),
+  overallRating: z.string().nullable(),
+  improvementRequired: z.boolean(),
+  promotionWatch: z.boolean(),
+  readyForPromotion: z.boolean(),
+  completedAt: z.string().nullable(),
+});
+
+export const quarterlyKpiReportRowSchema = z.object({
+  summaryId: z.string(),
+  candidateId: z.string(),
+  fullName: z.string(),
+  candidateCode: z.string(),
+  programName: z.string(),
+  batchName: z.string().nullable(),
+  reviewYear: z.number(),
+  reviewQuarter: z.number(),
+  quarterlyAverageScore: z.number().nullable(),
+  outcome: z.string().nullable(),
+  status: z.string(),
+  totalQuarterlyHours: z.number(),
+  completedAt: z.string().nullable(),
+});
+
+export const phasePromotionPipelineSummarySchema = z.object({
+  draft: z.number(),
+  submitted: z.number(),
+  underReview: z.number(),
+  revisionRequired: z.number(),
+  approved: z.number(),
+  rejected: z.number(),
+});
+
+export const phasePromotionPipelineRowSchema = z.object({
+  reviewId: z.string(),
+  candidateId: z.string(),
+  fullName: z.string(),
+  candidateCode: z.string(),
+  programName: z.string(),
+  batchName: z.string().nullable(),
+  currentPhase: z.string(),
+  proposedNextPhase: z.string(),
+  proposedNextDesignation: z.string(),
+  promotionEffectiveDate: z.string(),
+  preparedDate: z.string(),
+  status: z.string(),
+  programAdminDecision: z.string().nullable(),
+  superAdminDecision: z.string().nullable(),
+  candidateAcknowledgedAt: z.string().nullable(),
+});
+
+export const submissionComplianceReportRowSchema = z.object({
+  candidateId: z.string(),
+  fullName: z.string(),
+  candidateCode: z.string(),
+  programName: z.string(),
+  batchName: z.string().nullable(),
+  dailyLogSubmittedCount: z.number(),
+  dailyLogApprovedCount: z.number(),
+  timesheetSubmittedCount: z.number(),
+  timesheetApprovedCount: z.number(),
+  taskAssignedCount: z.number(),
+  taskApprovedCount: z.number(),
+  taskRevisionCount: z.number(),
+  dailyLogApprovalRate: z.number().nullable(),
+  timesheetApprovalRate: z.number().nullable(),
+  taskApprovalRate: z.number().nullable(),
+});
+
+export const reportsOverviewSchema = z.object({
+  filters: reportsFilterSchema,
+  summary: reportsOverviewSummarySchema,
+  candidateProgress: z.array(candidateProgressReportRowSchema),
+  scopePerformance: z.array(scopePerformanceReportRowSchema),
+  monthlyKpi: z.array(monthlyKpiReportRowSchema),
+  quarterlyKpi: z.array(quarterlyKpiReportRowSchema),
+  promotionPipeline: z.object({
+    summary: phasePromotionPipelineSummarySchema,
+    records: z.array(phasePromotionPipelineRowSchema),
+  }),
+  submissionCompliance: z.array(submissionComplianceReportRowSchema),
+});
+
 export const taskBriefSchema = z.object({
   id: z.string(),
   candidateId: z.string(),
@@ -756,6 +912,7 @@ export const listChatMessagesResponseSchema = apiSuccessSchema(
 export const chatMessageResponseSchema = apiSuccessSchema(chatMessageSchema);
 export const listCallsResponseSchema = apiSuccessSchema(z.array(callSchema));
 export const callResponseSchema = apiSuccessSchema(callSchema);
+export const reportsOverviewResponseSchema = apiSuccessSchema(reportsOverviewSchema);
 
 export type ApiError = z.infer<typeof apiErrorSchema>;
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
@@ -827,6 +984,16 @@ export type PhasePromotionSuperAdminReview = z.infer<
   typeof phasePromotionSuperAdminReviewSchema
 >;
 export type PhasePromotionReview = z.infer<typeof phasePromotionReviewSchema>;
+export type ReportsFilter = z.infer<typeof reportsFilterSchema>;
+export type ReportsOverviewSummary = z.infer<typeof reportsOverviewSummarySchema>;
+export type CandidateProgressReportRow = z.infer<typeof candidateProgressReportRowSchema>;
+export type ScopePerformanceReportRow = z.infer<typeof scopePerformanceReportRowSchema>;
+export type MonthlyKpiReportRow = z.infer<typeof monthlyKpiReportRowSchema>;
+export type QuarterlyKpiReportRow = z.infer<typeof quarterlyKpiReportRowSchema>;
+export type PhasePromotionPipelineSummary = z.infer<typeof phasePromotionPipelineSummarySchema>;
+export type PhasePromotionPipelineRow = z.infer<typeof phasePromotionPipelineRowSchema>;
+export type SubmissionComplianceReportRow = z.infer<typeof submissionComplianceReportRowSchema>;
+export type ReportsOverview = z.infer<typeof reportsOverviewSchema>;
 export type TaskBrief = z.infer<typeof taskBriefSchema>;
 export type AuthTokens = z.infer<typeof authTokensSchema>;
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
@@ -881,3 +1048,4 @@ export type ListChatMessagesResponse = z.infer<typeof listChatMessagesResponseSc
 export type ChatMessageResponse = z.infer<typeof chatMessageResponseSchema>;
 export type ListCallsResponse = z.infer<typeof listCallsResponseSchema>;
 export type CallResponse = z.infer<typeof callResponseSchema>;
+export type ReportsOverviewResponse = z.infer<typeof reportsOverviewResponseSchema>;

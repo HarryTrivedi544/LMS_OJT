@@ -451,6 +451,11 @@ h2 {
   margin: 0 auto;
 }
 
+.reports-page {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
 .users-grid {
   grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
   align-items: start;
@@ -579,6 +584,10 @@ h2 {
 
 .timesheet-filters {
   grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) minmax(180px, 1.2fr) minmax(150px, 180px) auto;
+}
+
+.reports-filter-bar {
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(220px, 1.2fr) auto;
 }
 
 .daily-log-entry-panel,
@@ -928,6 +937,27 @@ h2 {
 
 .kpi-review-card {
   gap: 12px;
+}
+
+.reports-stats {
+  margin-top: 16px;
+}
+
+.reports-grid {
+  grid-template-columns: 1fr;
+  margin-top: 16px;
+}
+
+.reports-table td strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.reports-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
 .kpi-tag-list {

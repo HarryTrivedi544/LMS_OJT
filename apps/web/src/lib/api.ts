@@ -11,6 +11,7 @@ import type {
   CandidateLogEntry,
   CandidateOptions,
   Program,
+  ReportsOverview,
   KpiFeeRecommendation,
   KpiReview,
   KpiScoreEntry,
@@ -1107,6 +1108,27 @@ export const createCall = (
     },
     body: JSON.stringify(input),
   });
+
+export const getReportsOverview = (
+  accessToken: string,
+  filters: {
+    programId?: string;
+    batchId?: string;
+    candidateId?: string;
+  } = {},
+) =>
+  request<ReportsOverview>(
+    `/api/v1/reports/overview${toQueryString({
+      programId: filters.programId,
+      batchId: filters.batchId,
+      candidateId: filters.candidateId,
+    })}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
 
 export const updateCall = (
   accessToken: string,

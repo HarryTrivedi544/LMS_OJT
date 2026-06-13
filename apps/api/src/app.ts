@@ -17,6 +17,7 @@ import { healthRouter } from "./modules/health/health.routes.js";
 import { kpiReviewsRouter } from "./modules/kpi-reviews/kpi-reviews.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { programsRouter } from "./modules/programs/programs.routes.js";
+import { reportsRouter } from "./modules/reports/reports.routes.js";
 import { taskBriefsRouter } from "./modules/task-briefs/task-briefs.routes.js";
 import { timesheetsRouter } from "./modules/timesheets/timesheets.routes.js";
 import { usersRouter } from "./modules/users/users.routes.js";
@@ -39,6 +40,7 @@ export const createApp = () => {
   app.use("/api/v1/auth", authRouter);
   app.use("/api/v1/users", usersRouter);
   app.use("/api/v1/programs", programsRouter);
+  app.use("/api/v1/reports", reportsRouter);
   app.use("/api/v1/candidates", candidatesRouter);
   app.use("/api/v1/candidate-logs", candidateLogsRouter);
   app.use("/api/v1/files", filesRouter);

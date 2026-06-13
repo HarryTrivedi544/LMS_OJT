@@ -63,6 +63,48 @@ export const getReviewerUserIdsForCandidate = async (candidateId: string) => {
   return [...reviewerIds];
 };
 
+export const getProgramAdminUserIdsForCandidate = async (candidateId: string) => {
+  const [candidate] = await db
+    .select({
+      programId: candidates.programId,
+    })
+    .from(candidates)
+    .where(and(eq(candidates.id, candidateId), isNull(candidates.deletedAt)))
+    .limit(1);
+
+  if (!candidate) {
+    return [];
+  }
+
+  const programAdmins = await db
+    .select({ userId: programAssignments.userId })
+    .from(programAssignments)
+    .where(
+      and(
+        eq(programAssignments.programId, candidate.programId),
+        eq(programAssignments.role, "Program Admin"),
+        isNull(programAssignments.deletedAt),
+      ),
+    );
+
+  return [...new Set(programAdmins.map((row) => row.userId))];
+};
+
+export const getSuperAdminUserIds = async () => {
+  const rows = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(
+      and(
+        eq(users.role, "Super Admin"),
+        eq(users.status, "active"),
+        isNull(users.deletedAt),
+      ),
+    );
+
+  return [...new Set(rows.map((row) => row.id))];
+};
+
 export const getActiveCandidateUserIds = async () => {
   const rows = await db
     .select({ userId: candidates.userId })

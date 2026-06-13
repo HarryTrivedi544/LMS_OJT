@@ -3,15 +3,15 @@ import type { Server, Socket } from "socket.io";
 import { ChatService } from "../modules/chat/chat.service.js";
 import { ChatRepository } from "../modules/chat/chat.repository.js";
 
-const chatService = new ChatService();
-const chatRepository = new ChatRepository();
-
 type SocketAuthData = {
   userId: string;
   role: string;
 };
 
 export const registerChatHandlers = (io: Server) => {
+  const chatService = new ChatService();
+  const chatRepository = new ChatRepository();
+
   io.on("connection", (socket: Socket) => {
     socket.emit("system.ready", {
       service: "lms-realtime",

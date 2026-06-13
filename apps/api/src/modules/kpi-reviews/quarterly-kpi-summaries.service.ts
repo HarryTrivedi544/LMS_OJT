@@ -1,6 +1,7 @@
 import type { Role } from "@lms/shared";
 
 import { EvidenceService } from "../evidence/evidence.service.js";
+import { notifyQuarterlyKpiSummaryCompleted } from "../../integrations/notifications/workflow-notifications.js";
 import { HttpError } from "../../errors/http-error.js";
 import type {
   CreateQuarterlyKpiSummaryInput,
@@ -381,6 +382,12 @@ export class QuarterlyKpiSummariesService {
       actorType: "user",
       actorId: context.actorId,
       payload: completedResponse,
+    });
+    await notifyQuarterlyKpiSummaryCompleted({
+      candidateUserId: completedSummary.userId,
+      reviewYear: completedSummary.reviewYear,
+      reviewQuarter: completedSummary.reviewQuarter,
+      quarterlyAverageScore: completedSummary.rollup.quarterlyAverageScore,
     });
 
     return completedResponse;

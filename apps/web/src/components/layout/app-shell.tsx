@@ -128,8 +128,8 @@ const navigationItems: NavigationItem[] = [
     label: "Reports",
     href: "/reports",
     icon: ShieldCheck,
-    roles: ["Super Admin", "Program Admin"],
-    isReady: false,
+    roles: ["Super Admin", "Program Admin", "Program Lead"],
+    isReady: true,
   },
   {
     label: "Settings",

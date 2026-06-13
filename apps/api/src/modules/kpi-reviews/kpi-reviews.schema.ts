@@ -70,8 +70,8 @@ export const kpiPromotionSignalSchema = z.object({
 
 export const kpiFeeRecommendationSchema = z.object({
   decision: z.enum(["maintain", "increment", "hold"]),
-  incrementAmount: z.number().min(0).max(1000000).optional(),
-  justification: z.string().trim().max(2000).optional(),
+  incrementAmount: z.number().min(0).max(1000000).nullable().optional(),
+  justification: z.string().trim().max(2000).nullable().optional(),
 });
 
 export const listKpiReviewsSchema = z.object({
